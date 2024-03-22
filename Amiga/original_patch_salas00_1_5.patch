@@ -1,0 +1,360 @@
+diff --color -rupN openfodder-1.5.3/makefile.amigaos4 openfodder-1.5.3-amiga/makefile.amigaos4
+--- openfodder-1.5.3/makefile.amigaos4	1970-01-01 01:00:00.000000000 +0100
++++ openfodder-1.5.3-amiga/makefile.amigaos4	2018-12-26 12:22:16.000000000 +0100
+@@ -0,0 +1,53 @@
++CXX = ppc-amigaos-g++
++STRIP = ppc-amigaos-strip
++
++AMIGADATE = $(shell date +"%-d.%-m.%Y")
++
++SDL2_CFLAGS = -I/SDK/local/newlib/include/SDL2
++SDL2_LIBS = -lSDL2_mixer -lmikmod -lmodplug -lFLAC -lvorbisfile -lvorbis -logg -lsmpeg2 -lSDL2 -lpthread
++
++WARNINGS = -Wall -Wwrite-strings -Wno-multichar -Wno-comment -Wno-sign-compare -Wno-switch -Wno-unused-but-set-variable
++CXXFLAGS = -std=gnu++14 -O2 -g $(WARNINGS) -I./Source $(SDL2_CFLAGS) -D__AMIGADATE__=\"$(AMIGADATE)\" -DWORDS_BIGENDIAN
++LDFLAGS = -static -athread=single
++LIBS = $(SDL2_LIBS) -lunix
++
++STRIPFLAGS = -R.comment --strip-unneeded-rel-relocs
++
++SRCS  = $(wildcard Source/*.cpp)
++SRCS += $(wildcard Source/PC/*.cpp)
++SRCS += $(wildcard Source/Amiga/*.cpp)
++SRCS += $(wildcard Source/Structures/*.cpp)
++
++OBJS = $(patsubst Source/%.cpp,obj-os4/%.o,$(SRCS))
++
++.PHONY: all
++all: gitversion fodder
++
++.PHONY: gitversion
++gitversion:
++	echo 'const char gitversion[] = "1.5.3";' > Source/gitver.hpp
++
++obj-os4/%.o: Source/%.cpp
++	@mkdir -p obj-os4
++	$(CXX) $(CXXFLAGS) -c -o $@ $<
++
++obj-os4/PC/%.o: Source/PC/%.cpp
++	@mkdir -p obj-os4/PC
++	$(CXX) $(CXXFLAGS) -c -o $@ $<
++
++obj-os4/Amiga/%.o: Source/Amiga/%.cpp
++	@mkdir -p obj-os4/Amiga
++	$(CXX) $(CXXFLAGS) -c -o $@ $<
++
++obj-os4/Structures/%.o: Source/Structures/%.cpp
++	@mkdir -p obj-os4/Structures
++	$(CXX) $(CXXFLAGS) -c -o $@ $<
++
++fodder: $(OBJS)
++	$(CXX) $(LDFLAGS) -o $@.debug $^ $(LIBS)
++	$(STRIP) $(STRIPFLAGS) -o $@ $@.debug
++
++.PHONY: clean
++clean:
++	rm -rf fodder fodder.debug obj-os4
++
+diff --color -rupN openfodder-1.5.3/Source/Amiga/Graphics_Amiga.cpp openfodder-1.5.3-amiga/Source/Amiga/Graphics_Amiga.cpp
+--- openfodder-1.5.3/Source/Amiga/Graphics_Amiga.cpp	2018-12-15 09:47:57.000000000 +0100
++++ openfodder-1.5.3-amiga/Source/Amiga/Graphics_Amiga.cpp	2018-12-25 21:52:18.000000000 +0100
+@@ -174,12 +174,12 @@ bool cGraphics_Amiga::Sprite_OnScreen_Ch
+ 
+ bool cGraphics_Amiga::Sprite_OnScreen_Check( bool p16bit ) {
+ 	int16 ax;
+-    int16  drawColumns;
++	int16 drawColumns;
+ 
+-    if (p16bit)
+-        drawColumns = (mFodder->mVideo_Draw_Columns);
+-    else
+-        drawColumns = (mFodder->mVideo_Draw_Columns << 3);
++	if (p16bit)
++		drawColumns = (mFodder->mVideo_Draw_Columns);
++	else
++		drawColumns = (mFodder->mVideo_Draw_Columns << 3);
+ 
+ 	if (mFodder->mVideo_Draw_PosY < 0) {
+ 		ax = mFodder->mVideo_Draw_PosY + mFodder->mVideo_Draw_Rows;
+@@ -342,8 +342,8 @@ void cGraphics_Amiga::Load_Hill_Data() {
+ void cGraphics_Amiga::Load_Sprite_Font() {
+ 
+ 	mImageFonts.mData = g_Resource->fileGet( "FONT.RAW" );
+-    if (!mImageFonts.mData->size())
+-        return;
++	if (!mImageFonts.mData->size())
++		return;
+ 
+ 	// Load the palette
+ 	mImageFonts.LoadPalette_Amiga(mImageFonts.mData->data(), 16);
+@@ -441,10 +441,10 @@ void cGraphics_Amiga::SetActiveSpriteShe
+ 
+ 	switch (pSpriteType) {
+ 	case eGFX_IN_GAME:
+-        if (mFodder->mVersionCurrent->isAmigaTheOne())
+-            mFodder->SetActiveSpriteSheetPtr(mSpriteSheetTypes_InGame_Amiga_TheOne);
+-        else
+-    		mFodder->SetActiveSpriteSheetPtr( mSpriteSheetTypes_InGame_Amiga );
++		if (mFodder->mVersionCurrent->isAmigaTheOne())
++			mFodder->SetActiveSpriteSheetPtr(mSpriteSheetTypes_InGame_Amiga_TheOne);
++		else
++			mFodder->SetActiveSpriteSheetPtr( mSpriteSheetTypes_InGame_Amiga );
+ 
+ 		return;
+ 
+diff --color -rupN openfodder-1.5.3/Source/Amiga/Sound_Amiga.cpp openfodder-1.5.3-amiga/Source/Amiga/Sound_Amiga.cpp
+--- openfodder-1.5.3/Source/Amiga/Sound_Amiga.cpp	2018-12-15 09:47:57.000000000 +0100
++++ openfodder-1.5.3-amiga/Source/Amiga/Sound_Amiga.cpp	2018-12-26 12:29:03.000000000 +0100
+@@ -118,7 +118,11 @@ bool cSound_Amiga::devicePrepare() {
+ 
+ 	// FM Quality, 16Bit Signed, Mono
+ 	desired->freq=44100;
++#ifdef WORDS_BIGENDIAN
++	desired->format=AUDIO_S16MSB;
++#else
+ 	desired->format=AUDIO_S16LSB;
++#endif
+ 	desired->channels=2;
+ 
+ 	// 2048 Samples, at 2 bytes per sample
+diff --color -rupN openfodder-1.5.3/Source/GameData.cpp openfodder-1.5.3-amiga/Source/GameData.cpp
+--- openfodder-1.5.3/Source/GameData.cpp	2018-12-15 09:47:57.000000000 +0100
++++ openfodder-1.5.3-amiga/Source/GameData.cpp	2018-12-25 15:44:40.000000000 +0100
+@@ -373,8 +373,8 @@ void sGameData::Clear() {
+ 	mMission_Phases_Remaining = 0;
+ 	mRecruit_NextID = 0;
+ 
+-    for (auto& Troop : mSoldiers_Allocated)
+-        Troop.Clear();
++	for (auto& Troop : mSoldiers_Allocated)
++		Troop.Clear();
+ 
+ 	mScore_Kills_Away = 0;
+ 	mScore_Kills_Home = 0;
+@@ -688,4 +688,4 @@ bool sGameData::FromJson(const std::stri
+         mMission_Phases_Remaining = (int16)mMission_Current->NumberOfPhases();
+     }
+ 	return true;
+-}
+\ Brak znaku nowej linii na końcu pliku
++}
+diff --color -rupN openfodder-1.5.3/Source/gitver.hpp openfodder-1.5.3-amiga/Source/gitver.hpp
+--- openfodder-1.5.3/Source/gitver.hpp	1970-01-01 01:00:00.000000000 +0100
++++ openfodder-1.5.3-amiga/Source/gitver.hpp	2018-12-26 12:29:15.000000000 +0100
+@@ -0,0 +1 @@
++const char gitversion[] = "1.5.3";
+diff --color -rupN openfodder-1.5.3/Source/PC/Graphics_PC.cpp openfodder-1.5.3-amiga/Source/PC/Graphics_PC.cpp
+--- openfodder-1.5.3/Source/PC/Graphics_PC.cpp	2018-12-15 09:47:57.000000000 +0100
++++ openfodder-1.5.3-amiga/Source/PC/Graphics_PC.cpp	2018-12-25 21:49:47.000000000 +0100
+@@ -127,10 +127,10 @@ void cGraphics_PC::SetActiveSpriteSheet(
+ 	
+ 	switch (pSpriteType) {
+ 		case eGFX_IN_GAME:
+-            if (mFodder->mVersionCurrent->isCannonFodder2())
+-                mFodder->SetActiveSpriteSheetPtr(mSpriteSheetTypes_InGame_PC2);
+-            else
+-    			mFodder->SetActiveSpriteSheetPtr( mSpriteSheetTypes_InGame_PC );
++			if (mFodder->mVersionCurrent->isCannonFodder2())
++				mFodder->SetActiveSpriteSheetPtr(mSpriteSheetTypes_InGame_PC2);
++			else
++				mFodder->SetActiveSpriteSheetPtr( mSpriteSheetTypes_InGame_PC );
+ 			return;
+ 
+ 		case eGFX_FONT:
+diff --color -rupN openfodder-1.5.3/Source/stdafx.cpp openfodder-1.5.3-amiga/Source/stdafx.cpp
+--- openfodder-1.5.3/Source/stdafx.cpp	2018-12-15 09:47:57.000000000 +0100
++++ openfodder-1.5.3-amiga/Source/stdafx.cpp	2018-12-26 12:26:52.000000000 +0100
+@@ -28,6 +28,12 @@
+ #include <sys/types.h>
+ #include <sys/stat.h>
+ 
++#ifdef __amigaos4__
++static const char __attribute__((used)) extver[] = "\0$EXTVER: fodder 1.5.3 (" __AMIGADATE__ ")"
++	" AmigaOS port by Fredrik Wikstrom";
++static const char __attribute__((used)) stack[] = "\0$STACK:65536";
++#endif
++
+ std::shared_ptr<cResources> g_Resource;
+ std::shared_ptr<cWindow>    g_Window;
+ std::shared_ptr<cFodder>    g_Fodder;
+@@ -205,6 +211,8 @@ void local_BasePathGenerate() {
+         filePathFinal << path;
+ 
+     filePathFinal << "/Documents/OpenFodder/";
++#elif defined(__amigaos4__)
++	filePathFinal << "/PROGDIR/";
+ #else
+     std::string FinalPath;
+ 
+@@ -266,11 +274,11 @@ void local_BasePathGenerate() {
+ std::string local_PathGenerate( const std::string& pFile, const std::string& pPath, eDataType pDataType = eData) {
+ 	std::stringstream	 filePathFinal;
+ 
+-    if (!gLocalBasePath.size())
+-        local_BasePathGenerate();
++	if (!gLocalBasePath.size())
++		local_BasePathGenerate();
+ 
+-    if (pDataType != eNone)
+-        filePathFinal << gLocalBasePath;
++	if (pDataType != eNone)
++		filePathFinal << gLocalBasePath;
+ 
+ 	switch (pDataType) {
+ 	case eData:
+@@ -376,6 +384,7 @@ tSharedBuffer local_FileRead( const std:
+  * @param pSize Number of words
+  */
+ void tool_EndianSwap( uint8 *pBuffer, size_t pSize ) {
++#ifndef __amigaos4__
+ 	uint8 *pDest = pBuffer;
+ 	
+ 	pSize /= 2;
+@@ -387,6 +396,7 @@ void tool_EndianSwap( uint8 *pBuffer, si
+ 		*pDest++ = ah;
+ 		*pDest++ = al;
+ 	}
++#endif
+ }
+ 
+ std::string tool_StripLeadingZero( const std::string& pValue ) {
+@@ -477,7 +487,11 @@ std::vector<std::string> local_Directory
+ #include <dirent.h>
+ std::string findType;
+ 
++#ifdef __amigaos4__
++int file_select(struct dirent *entry) {
++#else
+ int file_select(const struct dirent *entry) {
++#endif
+ 	std::string name = entry->d_name;
+ 
+ 	transform( name.begin(), name.end(), name.begin(), ::toupper );
+diff --color -rupN openfodder-1.5.3/Source/stdafx.hpp openfodder-1.5.3-amiga/Source/stdafx.hpp
+--- openfodder-1.5.3/Source/stdafx.hpp	2018-12-15 09:47:57.000000000 +0100
++++ openfodder-1.5.3-amiga/Source/stdafx.hpp	2018-12-26 12:25:47.000000000 +0100
+@@ -88,13 +88,31 @@ inline uint32 readBEDWord( const void *b
+ 
+ // Read little endian from the buffer
+ template <class tRet> inline tRet readLE(const void *pBuffer) {
+-    const tRet* data = (const tRet*)pBuffer;
+-    return *data;
++#ifdef WORDS_BIGENDIAN
++	const uint8* bytes = (const uint8*) pBuffer;
++
++	switch (sizeof(tRet)) {
++		case 2:
++			return uint16((bytes[1] << 8) + bytes[0]);
++		case 4:
++			return uint32((bytes[3] << 24) + (bytes[2] << 16) + (bytes[1] << 8) + (bytes[0]));
++	}
++#else
++	const tRet* data = (const tRet*)pBuffer;
++	return *data;
++#endif
+ }
+ 
+ inline void writeLEWord( const void *buffer, uint16 pValue ) {
++#ifdef WORDS_BIGENDIAN
++	uint8* bytes = (uint8*) buffer;
++
++	bytes[0] = (uint8) (pValue & 0xFF);
++	bytes[1] = (uint8) (pValue >> 8);
++#else
+ 	uint16* wordBytes = (uint16 *) buffer;
+ 	*wordBytes = pValue;
++#endif
+ }
+ 
+ #ifndef _WIN32
+@@ -104,6 +122,41 @@ inline void writeLEWord( const void *buf
+ 	#define _stricmp( a, b ) strcmp(a, b)
+ #endif
+ 
++#ifdef __amigaos4__
++namespace std {
++	template <typename T> string to_string(const T &n) {
++		ostringstream strm;
++		strm << n;
++		return strm.str();
++	}
++
++	typedef basic_string<wchar_t> wstring;
++
++	using ::atoll;
++	using ::snprintf;
++	using ::strtof;
++	using ::strtoll;
++	using ::strtoull;
++
++	inline int stoi(const string &str, size_t *idx = NULL, int base = 10) {
++		const char *start = str.c_str();
++		const char *end;
++		int n;
++
++		n = ::strtol(start, (char **)&end, base);
++
++		if (idx != NULL)
++			*idx = end - start;
++
++		return n;
++	}
++
++	inline long double strtold(const char *str, char **endp) {
++		return strtod(str, endp);
++	}
++}
++#endif
++
+ #include "Debugger.hpp"
+ 
+ #include "Position.hpp"
+diff --color -rupN openfodder-1.5.3/Source/Surface.cpp openfodder-1.5.3-amiga/Source/Surface.cpp
+--- openfodder-1.5.3/Source/Surface.cpp	2018-12-15 09:47:57.000000000 +0100
++++ openfodder-1.5.3-amiga/Source/Surface.cpp	2018-12-25 15:51:49.000000000 +0100
+@@ -195,8 +195,8 @@ inline void cSurface::paletteSDLColorSet
+  */
+ void cSurface::draw() {
+ 
+-    if (mIsLoadedImage)
+-        return;
++	if (mIsLoadedImage)
++		return;
+ 
+ 	const uint8 *bufferCurrent = mSurfaceBuffer;
+ 	const uint8 *bufferCurrentMax = (mSurfaceBuffer + mSurfaceBufferSize);
+diff --color -rupN openfodder-1.5.3/Source/Utils/cxxopts.hpp openfodder-1.5.3-amiga/Source/Utils/cxxopts.hpp
+--- openfodder-1.5.3/Source/Utils/cxxopts.hpp	2018-12-15 09:47:57.000000000 +0100
++++ openfodder-1.5.3-amiga/Source/Utils/cxxopts.hpp	2018-12-26 11:06:25.000000000 +0100
+@@ -1685,7 +1685,7 @@ ParseResult::parse(int& argc, char**& ar
+ 
+   bool consume_remaining = false;
+ 
+-  while (current != argc)
++  while (current < argc)
+   {
+     if (strcmp(argv[current], "--") == 0)
+     {
+@@ -1823,7 +1823,7 @@ ParseResult::parse(int& argc, char**& ar
+     }
+ 
+     //adjust argv for any that couldn't be swallowed
+-    while (current != argc) {
++    while (current < argc) {
+       argv[nextKeep] = argv[current];
+       ++nextKeep;
+       ++current;
+diff --color -rupN openfodder-1.5.3/Source/Window.cpp openfodder-1.5.3-amiga/Source/Window.cpp
+--- openfodder-1.5.3/Source/Window.cpp	2018-12-15 09:47:57.000000000 +0100
++++ openfodder-1.5.3-amiga/Source/Window.cpp	2018-12-25 15:52:21.000000000 +0100
+@@ -444,8 +444,8 @@ void cWindow::SetScreenSize( const cDime
+  */
+ void cWindow::SetOriginalRes( const cDimension& pDimension ) {
+ 
+-    if (mOriginalResolution == pDimension)
+-        return;
++	if (mOriginalResolution == pDimension)
++		return;
+ 
+ 	mOriginalResolution = pDimension;
+ 	
