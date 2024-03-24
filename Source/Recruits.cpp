@@ -1163,9 +1163,9 @@ int16 cFodder::Recruit_Show() {
 
     }
     else {
-        if (mVersionCurrent->mName == "Random Map") {
-
-			CreateRandom();
+        if (mVersionDefault->mName == "Random Map") {
+			sMapParams Params(mRandom.get());
+			CreateRandom(Params);
 			mGame_Data.mMission_Recruitment = 0;
         }
         else {
@@ -1185,7 +1185,7 @@ int16 cFodder::Recruit_Show() {
 			mSound->Music_Play(0);
 
         // Retail / Custom set show the Recruitment Hill
-        if (mVersionCurrent->isRetail() || mVersionCurrent->isPCFormat() || mCustom_Mode == eCustomMode_Set) {
+        if (mVersionCurrent->isRetail() || mVersionCurrent->isPCFormat() || mVersionCurrent->isRandom() || mCustom_Mode == eCustomMode_Set) {
 
             // Recruit Screen
             if (Recruit_Loop())

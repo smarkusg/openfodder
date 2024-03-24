@@ -38,8 +38,7 @@ cWindow::cWindow() {
 
 	mRenderer = 0;
 
-    mHasFocus = false;
-    mCursorGrabbed = false;
+    mHasFocus = true;
 	mResized = false;
 }
 
@@ -68,7 +67,7 @@ bool cWindow::InitWindow( const std::string& pWindowTitle ) {
 		return false;
 	}
 
-	mRenderer = SDL_CreateRenderer(mWindow, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
+	mRenderer = SDL_CreateRenderer(mWindow, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC );
 	if (!mRenderer) {
         g_Debugger->Error("Failed to create rendered");
 		exit( 1 );
@@ -76,6 +75,7 @@ bool cWindow::InitWindow( const std::string& pWindowTitle ) {
 	}
 
 	SDL_SetHint( SDL_HINT_RENDER_SCALE_QUALITY, 0 );
+	SDL_SetHintWithPriority(SDL_HINT_MOUSE_RELATIVE_MODE_WARP, "1", SDL_HINT_OVERRIDE);
 
 	SetCursor();
 
@@ -88,8 +88,14 @@ bool cWindow::InitWindow( const std::string& pWindowTitle ) {
         ToggleFullscreen();
     }
 
+	SDL_SetRelativeMouseMode(SDL_TRUE);
 
 	return true;
+}
+
+void cWindow::SetRelativeMouseMode(bool pEnable) {
+
+	SDL_SetRelativeMouseMode(pEnable == true ? SDL_TRUE : SDL_FALSE);
 }
 
 std::vector<cEvent>* cWindow::EventGet() {
@@ -97,26 +103,9 @@ std::vector<cEvent>* cWindow::EventGet() {
 }
 
 bool cWindow::Cycle() {
-    //cPosition Mouse;
 
     EventCheck();
 
-    // Update the mouse position over the window
-    /*for (auto& Event : mEvents) {
-        switch (Event.mType) {
-        default:
-            break;
-        case eEvent_MouseLeftDown:
-        case eEvent_MouseRightDown:
-        case eEvent_MouseLeftUp:
-        case eEvent_MouseRightUp:
-        case eEvent_MouseMove:
-            Mouse = Event.mPosition;
-            break;
-        }
-    }*/
-
-    // TODO: Move Cursor logic here
 
     return true;
 }
@@ -199,6 +188,7 @@ void cWindow::EventCheck() {
 		case SDL_MOUSEMOTION:
 			Event.mType = eEvent_MouseMove;
 			Event.mPosition = cPosition(SysEvent.motion.x, SysEvent.motion.y);
+			Event.mPositionRelative = cPosition(SysEvent.motion.xrel, SysEvent.motion.yrel);
 			break;
 
 		case SDL_MOUSEWHEEL:
@@ -262,8 +252,6 @@ void cWindow::EventCheck() {
 		if ( Event.mType != eEvent_None )
 			mEvents.push_back( Event );
 	}
-
-    SDL_GetGlobalMouseState(&mMouseGlobal.mX, &mMouseGlobal.mY);
 }
 
 void cWindow::CalculateWindowSize() {
@@ -414,12 +402,7 @@ bool cWindow::isFullscreen() const {
 }
 
 bool cWindow::isMouseInside() const {
-    const cPosition MouseGlobalPos = GetMousePosition();
-    const cPosition WindowPos = GetWindowPosition();
-    const cDimension WindowSize = GetWindowSize();
-
-    return (MouseGlobalPos.mX >= WindowPos.mX && MouseGlobalPos.mX < WindowPos.mX + WindowSize.getWidth() &&
-            MouseGlobalPos.mY >= WindowPos.mY && MouseGlobalPos.mY < WindowPos.mY + WindowSize.getHeight());
+	return mWindow == SDL_GetMouseFocus();
 }
 
 bool cWindow::isResized() const {
@@ -430,8 +413,8 @@ bool cWindow::isResized() const {
  * Is either mouse button currently pressed
  */
 bool cWindow::isMouseButtonPressed_Global() const {
-    return  (SDL_GetGlobalMouseState(NULL, NULL) & SDL_BUTTON(SDL_BUTTON_LEFT)) ||
-            (SDL_GetGlobalMouseState(NULL, NULL) & SDL_BUTTON(SDL_BUTTON_RIGHT));
+    return  (SDL_GetMouseState(NULL, NULL) & SDL_BUTTON(SDL_BUTTON_LEFT)) ||
+            (SDL_GetMouseState(NULL, NULL) & SDL_BUTTON(SDL_BUTTON_RIGHT));
 }
 
 /**
@@ -461,18 +444,6 @@ void cWindow::ToggleFullscreen() {
 
 void cWindow::ClearResized() {
 	mResized = false;
-}
-
-void cWindow::SetMouseWindowPosition( const cPosition& pPosition ) {
-
-	SDL_WarpMouseInWindow( mWindow, pPosition.getX(), pPosition.getY() );
-}
-
-cPosition cWindow::GetMousePosition( const bool pRelative ) const {
-    if(!pRelative)
-        return mMouseGlobal;
-
-    return (mMouseGlobal - GetWindowPosition());
 }
 
 void cWindow::SetMousePosition(const cPosition& pPosition) {

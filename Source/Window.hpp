@@ -31,13 +31,11 @@ class cWindow {
 		cDimension			mOriginalResolution;
 
 		cDimension			mScreenSize;
-        cPosition           mMouseGlobal;
 
 		uint8				mScaler, mScalerPrevious;
 
 		bool				mWindowMode;
         bool                mHasFocus;
-        bool                mCursorGrabbed;
 		bool				mResized;
 
 	protected:
@@ -77,9 +75,7 @@ class cWindow {
 
 		void				SetCursor();
 
-        cPosition           GetMousePosition(const bool pRelative = false) const;
         void				SetMousePosition(const cPosition& pPosition);
-		void				SetMouseWindowPosition( const cPosition& pPosition );
 
 		void				SetScreenSize( const cDimension& pDimension );
 		void				SetOriginalRes( const cDimension& pDimension );
@@ -101,8 +97,10 @@ class cWindow {
 		bool			    GetWindowMode() const { return mWindowMode; }
         bool                HasFocus();
         bool                hasFocusEvent() const { return mHasFocus; }
-        bool                GetMouseGrabbed() const { return mCursorGrabbed; }
         cDimension          GetScale() const;
+
+		void				SetRelativeMouseMode(bool pEnable);
+
 };
 
 class cWindowNull : public cWindow {

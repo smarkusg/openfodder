@@ -45,8 +45,8 @@ void cResourceMan::addDir(const std::string& pPath) {
 void cResourceMan::addBaseDir(std::string pPath) {
 	// Ensure trailing / on path
 	if(pPath.size())
-                if (pPath[pPath.size() - 1] != '/')
-                         pPath.append("/");
+		if (pPath[pPath.size() - 1] != '/')
+			pPath.append("/");
 
 	mAllPaths.push_back(pPath + "OpenFodder/");
 }
@@ -92,10 +92,10 @@ void cResourceMan::validatePaths() {
 	mValidPaths.clear();
 	for (auto path : mAllPaths) {
 
-	       if (path[path.size() - 1] != '/')
+		if (path[path.size() - 1] != '/')
 			path.append("/");
 
-               if (FileExists(path + "Data")) {
+		if (FileExists(path + "Data")) {
 
 			// Ensure we have a trailing /
 			if (path[path.size() - 1] != '/')
@@ -153,9 +153,9 @@ void cResourceMan::findVersions() {
 
 					// See if we match
 					if (baseFileLower == FileLower) {
-						std::string MD5 = FileMD5(base + File.mName);
+						std::string MD5 = FileMD5(base + baseFile);
 
-						ReleaseFiles.insert(std::make_pair(FileLower, base + File.mName));
+						ReleaseFiles.insert(std::make_pair(FileLower, base + baseFile));
 
 						if (MD5 != File.mChecksum) {
 							if (MD5.length() == 0) {
@@ -584,9 +584,9 @@ std::string cResourceMan::getcwd() {
 }
 
 #ifdef __AMIGAOS4__
-int file_select(struct dirent *entry) {
+ int file_select(struct dirent *entry) {
 #else
-int file_select(const struct dirent *entry) {
+ int file_select(const struct dirent *entry) {
 #endif
 	std::string name = entry->d_name;
 
@@ -605,11 +605,8 @@ std::vector<std::string> cResourceMan::DirectoryList(const std::string& pPath, c
 	// Build the file path
 	std::stringstream finalPath;
 
-//#ifdef __AMIGAOS4__
-//	finalPath << pPath ;
-//#else
 	finalPath << pPath << "/";
-//#endif
+
 	findType = pExtension;
 
 	transform(findType.begin(), findType.end(), findType.begin(), ::toupper);

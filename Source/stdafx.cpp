@@ -23,7 +23,7 @@
 #include "stdafx.hpp"
 
 #ifdef __AMIGAOS4__
-#define AMIGA_VERSION "OpenFooder 1.6 (22.03.2024)"
+#define AMIGA_VERSION "OpenFooder 1.8 (23.03.2024)"
 static const char *__attribute__((used)) stackcookie = "$STACK: 500000";
 static const char *__attribute__((used)) version_tag = "$VER: " AMIGA_VERSION ;
 #endif

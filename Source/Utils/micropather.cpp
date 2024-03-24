@@ -28,7 +28,10 @@ distribution.
 #pragma warning( disable : 4530 )	// Exception handler isn't used
 #endif
 
-//#include <memory.h>
+#ifndef __AMIGAOS4__
+#include <memory.h>
+#endif
+
 #include <stdio.h>
 #include <cstring>
 

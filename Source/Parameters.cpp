@@ -265,10 +265,10 @@ bool sFodderParameters::ProcessCLI(int argc, char *argv[]) {
 
 		mDisableSound = result["nosound"].as<bool>();
 		mPlayground = result["playground"].as<bool>();
-
 		mSleepDelta = result["sleep-delta"].as<uint32_t>();
 
-		mCheatsEnabled = result["cheats"].as<bool>();
+		if (result.count("cheats"))
+			mCheatsEnabled = result["cheats"].as<bool>();
 
 		if(result.count("rows"))
 			mWindowRows = result["rows"].as<std::uint32_t>();
@@ -380,6 +380,9 @@ bool sFodderParameters::ProcessINI() {
 
 			if (ini.get("alternate-mouse", "false") == "true")
 				mMouseAlternative = true;
+
+			if (ini.get("copyprotection", "false") == "true")
+				mCopyProtection = true;
 		}
 	}
 

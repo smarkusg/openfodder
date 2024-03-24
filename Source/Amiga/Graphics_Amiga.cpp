@@ -1502,6 +1502,7 @@ void cGraphics_Amiga::Mission_Intro_Play(const bool pShowHelicopter, const eTile
 	int16 word_42873 = 0;
 	int16 word_42875 = 0;
 	int16 BladeFrame = 0;
+	static int16 mouseCheck = 0;
 
     PaletteSet(mSurface);
 	PaletteBriefingSet();
@@ -1554,18 +1555,22 @@ void cGraphics_Amiga::Mission_Intro_Play(const bool pShowHelicopter, const eTile
 		mFodder->mVideo_Draw_PosY = 163;
 		Video_Draw_16_Offset(word_4286F);
 
-		word_4286F += 8;
+		// Front
+		word_4286F += 4;
 		if (word_4286F >= 320)
 			word_4286F = 0;
 
-		word_42871 += 4;
+		// Middle
+		word_42871 += 3;
 		if (word_42871 >= 320)
 			word_42871 = 0;
 
+		// Back
 		word_42873 += 2;
 		if (word_42873 >= 320)
 			word_42873 = 0;
 
+		// Very Back
 		++word_42875;
 		if (word_42875 >= 320)
 			word_42875 = 0;
@@ -1573,7 +1578,13 @@ void cGraphics_Amiga::Mission_Intro_Play(const bool pShowHelicopter, const eTile
 		if (mSurface->isPaletteAdjusting())
 			mSurface->palette_FadeTowardNew();
 
-        mFodder->Mouse_Inputs_Get();
+		// This loop runs fast enough that the cursor can get stuck at the window border
+		// as focus events havnt been received for the mouse leaving the window
+		++mouseCheck;
+		if (mouseCheck % 5 == 0) {
+			mouseCheck = 0;
+			mFodder->Mouse_Inputs_Get();
+		}
         mFodder->Video_SurfaceRender();
 
 		if (mFodder->mMouse_Exit_Loop || mFodder->mPhase_Aborted) {
@@ -1583,7 +1594,8 @@ void cGraphics_Amiga::Mission_Intro_Play(const bool pShowHelicopter, const eTile
             mFodder->mPhase_Aborted = 0;
 		}
 
-        mFodder->Cycle_End();
+		mFodder->mWindow->Cycle();
+		mFodder->eventsProcess();
 	} while (mFodder->word_428D8 || mFodder->mSurface->isPaletteAdjusting());
 
 	mFodder->mMouse_Exit_Loop = false;

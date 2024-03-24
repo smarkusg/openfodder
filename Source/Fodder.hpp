@@ -158,6 +158,7 @@ public:
 
     int16           mMouse_Exit_Loop;
     cPosition       mMouse_EventLastPosition;
+    cPosition       mMouse_EventLastPositionRelative;
     uint32          mMouse_EventLastButtonsPressed;
     cPosition       mMouse_EventLastWheel;
     bool            mMouse_Locked;
@@ -513,10 +514,10 @@ public:
 
     int16           word_428B6;
     int16           word_428B8;
-    uint16          word_428BA;
+    int16          word_428BA;
 
-    uint32          mHelicopterPosX;
-    uint32          mHelicopterPosY;
+    int32          mHelicopterPosX;
+    int32          mHelicopterPosY;
     int16           mBriefing_Helicopter_Off1;
     int16           mBriefing_Helicopter_Off2;
     int16           mBriefing_Helicopter_Off3;
@@ -906,9 +907,9 @@ public:
 
     void            Sprite_Handle_Player_Adjust_Movement_Speed(sSprite* pSprite);
     void            Sprite_Draw_Row_Update(sSprite* pSprite);
-    void            Sprite_Handle_Troop_FrameUnk(sSprite* pSprite);
-    void            sub_1FCF2(sSprite* pSprite);
-    void            sub_1FDE7(sSprite* pSprite);
+    void            Sprite_Handle_Troop_Animation(sSprite* pSprite);
+    void            Sprite_Handle_Troop_Speed(sSprite* pSprite);
+    void            Sprite_Handle_Troop_Direct_TowardWeaponTarget_WithRestore(sSprite* pSprite);
     void            Sprite_Create_Player_Shadow(sSprite* pSprite);
     int16           Sprite_Create_BloodTrail(sSprite* pSprite, sSprite*& pData2C, sSprite*& pData30);
     void            Sprite_Terrain_Check(sSprite* pSprite, int16& pData4);
@@ -1236,7 +1237,7 @@ public:
     void            WonGame();
 
     void            Video_SurfaceRender( const bool pRestoreSurface = true );
-    void            Cycle_End();
+    void            Cycle_End(int64 pSleep = 40);
 
     void            sleepLoop(int64 pMilliseconds);
     int16           ShowImage_ForDuration(const std::string& pFilename, uint16 pDuration, size_t pBackColor = 0, bool pCanAbort = true);
@@ -1250,6 +1251,7 @@ public:
     virtual void    Mouse_Inputs_Get();
     void            Mouse_Inputs_Check();
     void            Mouse_Setup();
+    cPosition       Mouse_GetOnBorderPosition();
 
     void            eventProcess(const cEvent& pEvent);
     void            eventsProcess();
@@ -1286,7 +1288,7 @@ public:
     void            Playground();
 
     void            About();
-	void			CreateRandom();
+	void			CreateRandom(sMapParams pParams);
 	virtual void    Start();
     void            Exit(unsigned int pExitCode);
 

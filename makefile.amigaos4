@@ -3,16 +3,14 @@ STRIP = ppc-amigaos-strip
 
 AMIGADATE = $(shell date +"%-d.%-m.%Y")
 
-SDL2_CFLAGS = -I/opt/ppc-amigaos/usr/include -I/opt/ppc-amigaos/usr/include/SDL2
+SDL2_CFLAGS = -I/SDK/local/newlib/include/SDL2 -I/opt/ppc-amigaos/usr/include -I/opt/ppc-amigaos/usr/include/SDL2
 #SDL2_LIBS = -L//opt/ppc-amigaos/usr/lib -lSDL2_mixer -lmikmod -lmodplug -lFLAC -lvorbisfile -lvorbis -logg -lSDL2 -lpthread
-#SDL2_LIBS = -L//opt/ppc-amigaos/usr/lib -lSDL2_mixer -lmikmod -lmodplug -lFLAC -lvorbisfile -lvorbis -lSDL2 -lpthread
-SDL2_LIBS = -L//opt/ppc-amigaos/usr/lib -lSDL2_mixer -lSDL2 -lmodplug
-#CXXEXTRAFLAGS = -O2 -D_ARCH_G3 -D__USE_INLINE__ -mcpu=G3 -mno-altivec -mstrict-align -gstabs  -fno-plt -pipe -frename-registers -funroll-loops -frename-registers -fno-signaling-nans -fcx-limited-range -fno-signed-zeros
-WARNINGS = -Wall -Wwrite-strings -Wno-multichar -Wno-comment -Wno-sign-compare -Wno-switch -Wno-unused-but-set-variable
+SDL2_LIBS = -L//opt/ppc-amigaos/usr/lib -lSDL2_mixer -lSDL2 -lmodplug -lpthread
 
-CXXFLAGS = $(CXXEXTRAFLAGS) -std=gnu++14 -O2 -gstabs -g $(WARNINGS) -I./Source $(SDL2_CFLAGS) -D__AMIGADATE__=\"$(AMIGADATE)\" -D__AMIGAOS4__
-LDFLAGS = -static -athread=single -ldl -use-dynld -lpthread
-LIBS = $(SDL2_LIBS) -lunix 
+WARNINGS = -Wall -Wwrite-strings -Wno-multichar -Wno-comment -Wno-sign-compare -Wno-switch -Wno-unused-but-set-variable
+CXXFLAGS = -O2 -fno-plt -pipe -D_ARCH_G3 -mcpu=G3 -mno-altivec  -mstrict-align -mcrt=newlib -mbig-endian -std=gnu++14 -O2 -g $(WARNINGS) -I./Source $(SDL2_CFLAGS) -D_GLIBCXX_USE_C99_STDLIB -D__AMIGADATE__=\"$(AMIGADATE)\" -D__AMIGAOS4__
+LDFLAGS = -static -athread=single
+LIBS = $(SDL2_LIBS) -lunix
 
 STRIPFLAGS = -R.comment --strip-unneeded-rel-relocs
 
@@ -20,8 +18,8 @@ SRCS  = $(wildcard Source/*.cpp)
 SRCS += $(wildcard Source/PC/*.cpp)
 SRCS += $(wildcard Source/Amiga/*.cpp)
 SRCS += $(wildcard Source/Structures/*.cpp)
-SRCS += $(wildcard Source/Map/*.cpp)
 SRCS += $(wildcard Source/Utils/*.cpp)
+SRCS += $(wildcard Source/Map/*.cpp)
 
 OBJS = $(patsubst Source/%.cpp,obj-os4/%.o,$(SRCS))
 
@@ -30,7 +28,7 @@ all: gitversion fodder
 
 .PHONY: gitversion
 gitversion:
-	echo 'const char gitversion[] = "1.6.0";' > Source/gitver.hpp
+	echo 'const char gitversion[] = "1.8.0";' > Source/gitver.hpp
 
 obj-os4/%.o: Source/%.cpp
 	@mkdir -p obj-os4
@@ -48,12 +46,12 @@ obj-os4/Structures/%.o: Source/Structures/%.cpp
 	@mkdir -p obj-os4/Structures
 	$(CXX) $(CXXFLAGS) -c -o $@ $<
 
-obj-os4/Map/%.o: Source/Map/%.cpp
-	@mkdir -p obj-os4/Map
-	$(CXX) $(CXXFLAGS) -c -o $@ $<
-
 obj-os4/Utils/%.o: Source/Utils/%.cpp
 	@mkdir -p obj-os4/Utils
+	$(CXX) $(CXXFLAGS) -c -o $@ $<
+
+obj-os4/Map/%.o: Source/Map/%.cpp
+	@mkdir -p obj-os4/Map
 	$(CXX) $(CXXFLAGS) -c -o $@ $<
 
 fodder: $(OBJS)

@@ -38,14 +38,32 @@ const int16 SIDEBAR_WIDTH = 48;
 
 const int16 mBriefing_Helicopter_Offsets[] =
 {
-    0x0180, 0x0040, 0x0004, 0x01A0,
-    0x0040, 0x000F, 0x01C0, 0x0040,
-    0x0007, 0x01E0, 0x0020, 0x0007,
-    0x0000, 0x0010, 0x000A, 0x0080,
-    0x0010, 0x001E, 0x0100, 0x0010,
-    0x000A, 0x01A0, 0x0008, 0x0019,
-    0x0170, 0x0064, 0x000A, -1,
-    -1, -1
+    0x0180, 0x0040, 0x0004, 
+    0x01A0, 0x0040, 0x000F, 
+    0x01C0, 0x0040, 0x0007, 
+    0x01E0, 0x0020, 0x0007, 
+    0x0000, 0x0010, 0x000A, 
+    0x0080, 0x0010, 0x001E, 
+    0x0100, 0x0010, 0x000A, 
+    0x01A0, 0x0008, 0x0019,
+    0x0170, 0x0064, 0x000A, 
+    -1, -1, -1
+};
+
+const int16 mBriefing_Helicopter_Offsets_Amiga[] =
+{
+  0x0180, 0x0020, 0x0005, 
+  0x01A0, 0x0020, 0x001E, 
+  0x01C0, 0x0020, 0x0014, 
+  0x01E0, 0x0010, 0x0014, 
+  0x0000, 0x0008, 0x0014,
+  0x0080, 0x0008, 0x003C, 
+  0x0100, 0x0008, 0x0014, 
+  0x01A0, 0x0004, 0x002E, 
+  0x0170, 0x0032, 0x0010,       // Originally this line is 0x170, 0x32, 0x46
+  0x0170, 0x0020, 0x0010,       //  and this one didnt exist
+
+  -1, -1, -1
 };
 
 cFodder::cFodder(std::shared_ptr<cWindow> pWindow) {
@@ -1728,19 +1746,9 @@ bool cFodder::Campaign_Load(std::string pName) {
 }
 
 void cFodder::Map_Create(sMapParams pParams) {
-    uint8 TileID = (pParams.mTileType == eTileTypes_Int) ? 4
-                 : (pParams.mTileType == eTileTypes_AFX) ? 20
-                 : 16;
 
     if (mVersionCurrent->isAmigaPower())
 		pParams.mTileSub = eTileSub_1;
-
-    // In OF, this will only ever get called from the campaign selection screen,
-    // so we pick a tile thats easy to read text on
-#ifndef _OFED
-    if (mVersionCurrent->isAmigaXmas())
-        TileID = 100;
-#endif
 
 	mMapLoaded = std::make_shared<cRandomMap>(pParams);
 	
@@ -1755,18 +1763,6 @@ void cFodder::Map_Create(sMapParams pParams) {
 
     // Load the map specific resources
     Map_Load_Resources();
-
-#ifdef _OFED
-    // Editor needs to render the surface now
-    // Draw the tiles
-    MapTiles_Draw();
-
-    Mission_Sprites_Handle();
-
-    // Refresh the palette
-    mGraphics->PaletteSet(mSurface);
-    mSurface->surfaceSetToPaletteNew();
-#endif
 
 }
 
@@ -2639,26 +2635,31 @@ void cFodder::eventProcess(const cEvent& pEvent) {
 
     case eEvent_MouseLeftDown:
         mMouse_EventLastPosition = pEvent.mPosition;
+        mMouse_EventLastPositionRelative = pEvent.mPositionRelative;
         mMouse_EventLastButtonsPressed |= 1;
         break;
 
     case eEvent_MouseRightDown:
         mMouse_EventLastPosition = pEvent.mPosition;
+        mMouse_EventLastPositionRelative = pEvent.mPositionRelative;
         mMouse_EventLastButtonsPressed |= 2;
         break;
 
     case eEvent_MouseLeftUp:
         mMouse_EventLastPosition = pEvent.mPosition;
+        mMouse_EventLastPositionRelative = pEvent.mPositionRelative;
         mMouse_EventLastButtonsPressed &= ~1;
         break;
 
     case eEvent_MouseRightUp:
         mMouse_EventLastPosition = pEvent.mPosition;
+        mMouse_EventLastPositionRelative = pEvent.mPositionRelative;
         mMouse_EventLastButtonsPressed &= ~2;
         break;
 
     case eEvent_MouseMove:
         mMouse_EventLastPosition = pEvent.mPosition;
+        mMouse_EventLastPositionRelative = pEvent.mPositionRelative;
         break;
 
     case eEvent_MouseWheel:
@@ -2744,11 +2745,12 @@ void cFodder::keyProcess(uint8 pKeyCode, bool pPressed) {
 
 //markus lol wiesza sie 
     if (pKeyCode == SDL_SCANCODE_ESCAPE && pPressed) {
+//        mPhase_Aborted = true;
+//        mPhase_EscapeKeyAbort = true;
+
 	SDL_Quit();
         exit(1);
 
-//        mPhase_Aborted = true;
-//        mPhase_EscapeKeyAbort = true;
     }
     // In Mission and not on map overview
     if (mPhase_In_Progress && !mPhase_ShowMapOverview) {
@@ -2816,20 +2818,24 @@ void cFodder::Mouse_Setup() {
 
     mMouseX = (getCameraWidth() / 2) - 9;
     mMouseY = (getCameraHeight() / 2) - 9;
+    mInputMouseX = mMouseX;
+    mInputMouseY = mMouseY;
 }
 
 void cFodder::Mouse_Cursor_Handle() {
 	static bool WasClicked = false;
-	static bool CursorGrabbed = false;
+
 	const cPosition WindowPos = mWindow->GetWindowPosition();
 	const cDimension ScreenSize = mWindow->GetScreenSize();
 	const cDimension WindowSize = mWindow->GetWindowSize();
 	const cDimension scale = mWindow->GetScale();
+    static bool CursorGrabbed = true;
 
 	mMouseButtonStatus = mMouse_EventLastButtonsPressed;
 
-	if (!mWindow->hasFocusEvent() && CursorGrabbed)
-		CursorGrabbed = false;
+    if (!mWindow->hasFocusEvent() && CursorGrabbed) {
+        CursorGrabbed = false;
+    }
 
 	if (mStartParams->mMouseAlternative) {
 		mInputMouseX = (mMouse_EventLastPosition.mX / scale.getWidth()) + MOUSE_POSITION_X_ADJUST;
@@ -2865,64 +2871,72 @@ void cFodder::Mouse_Cursor_Handle() {
                 else if (mInputMouseY >= ScreenSize.getHeight() + MOUSE_POSITION_Y_ADJUST - 1)
                     mInputMouseY = ScreenSize.getHeight() + MOUSE_POSITION_Y_ADJUST - 2;
             }
+            mWindow->SetRelativeMouseMode(true);
         }
     } else {
-        cPosition BorderMouse;
-
         if (!mWindow->isFullscreen()) {
-            // Need to check if the game cursor is near an edge: top-left / top-right / bottom-left / bottom-right
-            if ((mMouseX <= MOUSE_POSITION_X_ADJUST && mMouseY <= MOUSE_POSITION_Y_ADJUST) ||
-                (mMouseX >= ScreenSize.getWidth() + MOUSE_POSITION_X_ADJUST - 1 && mMouseY <= MOUSE_POSITION_Y_ADJUST) ||
-                (mMouseX <= MOUSE_POSITION_X_ADJUST && mMouseY >= ScreenSize.getHeight() + MOUSE_POSITION_Y_ADJUST - 1) ||
-                (mMouseX >= ScreenSize.getWidth() + MOUSE_POSITION_X_ADJUST - 1 && mMouseY >= ScreenSize.getHeight() + MOUSE_POSITION_Y_ADJUST - 1)) {
-                BorderMouse.mX = mMouseX <= MOUSE_POSITION_X_ADJUST ? WindowPos.mX - 1 : WindowPos.mX + WindowSize.getWidth() + 1;
-                BorderMouse.mY = mMouseY <= MOUSE_POSITION_Y_ADJUST ? WindowPos.mY - 1 : WindowPos.mY + WindowSize.getHeight() + 1;
-            }
-            // Need to check if the game cursor is near a border on X axis
-            else if (mMouseX <= MOUSE_POSITION_X_ADJUST || mMouseX >= ScreenSize.getWidth() + MOUSE_POSITION_X_ADJUST - 1) {
-                BorderMouse.mX = mMouseX <= MOUSE_POSITION_X_ADJUST ? WindowPos.mX - 1 : WindowPos.mX + WindowSize.getWidth() + 1;
-                BorderMouse.mY = WindowPos.mY + (mMouseY - MOUSE_POSITION_Y_ADJUST) * scale.getHeight();
-            } // Need to check if the game cursor is near a border Y axis
-            else if (mMouseY <= MOUSE_POSITION_Y_ADJUST || mMouseY >= ScreenSize.getHeight() + MOUSE_POSITION_Y_ADJUST - 1) {
-                BorderMouse.mX = WindowPos.mX + (mMouseX - MOUSE_POSITION_X_ADJUST) * scale.getWidth();
-                BorderMouse.mY = mMouseY <= MOUSE_POSITION_Y_ADJUST ? WindowPos.mY - 1 : WindowPos.mY + WindowSize.getHeight() + 1;
-            }
+            cPosition BorderMouse = Mouse_GetOnBorderPosition();
 
-            //  if yes set system cursor outside the border
-            //  if yes set system cursor outside the border
+            // Cursor leaving window
             if (BorderMouse.mX || BorderMouse.mY) {
                 CursorGrabbed = false;
+                mWindow->SetRelativeMouseMode(false);
                 mWindow->SetMousePosition(BorderMouse);
                 return;
             }
         }
+
         // hack to avoid moving cursor on window resizing
         if (mWindow->isResized()) {
             mWindow->ClearResized();
+
         } else {
             if (WasClicked) {
                 if (!mWindow->isMouseButtonPressed_Global())
                     WasClicked = false;
             } else {
                 // Calc the distance from the cursor to the centre of the window
-                const cPosition Diff = (mMouse_EventLastPosition - WindowSize.getCentre());
-
-                mInputMouseX = mMouseX + static_cast<int16>((Diff.mX / scale.getWidth()) * 1.5);
-                mInputMouseY = mMouseY + static_cast<int16>((Diff.mY / scale.getHeight()) * 1.5);
+                mInputMouseX = mMouseX + static_cast<int16>(mMouse_EventLastPositionRelative.mX * 1.5);
+                mInputMouseY = mMouseY + static_cast<int16>(mMouse_EventLastPositionRelative.mY * 1.5);
+                mMouse_EventLastPositionRelative = { 0,0 };
+                
             }
         }
 
         // Set system cursor back to centre of window
-        mWindow->SetMousePosition(WindowSize.getCentre() + WindowPos);
+        //mWindow->SetMousePosition(WindowSize.getCentre() + WindowPos);
     }
 }
 
+cPosition cFodder::Mouse_GetOnBorderPosition() {
+    cPosition BorderMouse;
+    const cPosition WindowPos = mWindow->GetWindowPosition();
+    const cDimension ScreenSize = mWindow->GetScreenSize();
+    const cDimension WindowSize = mWindow->GetWindowSize();
+    const cDimension scale = mWindow->GetScale();
+
+    if ((mMouseX <= MOUSE_POSITION_X_ADJUST && mMouseY <= MOUSE_POSITION_Y_ADJUST) ||
+        (mMouseX >= ScreenSize.getWidth() + MOUSE_POSITION_X_ADJUST - 1 && mMouseY <= MOUSE_POSITION_Y_ADJUST) ||
+        (mMouseX <= MOUSE_POSITION_X_ADJUST && mMouseY >= ScreenSize.getHeight() + MOUSE_POSITION_Y_ADJUST - 1) ||
+        (mMouseX >= ScreenSize.getWidth() + MOUSE_POSITION_X_ADJUST - 1 && mMouseY >= ScreenSize.getHeight() + MOUSE_POSITION_Y_ADJUST - 1)) {
+        BorderMouse.mX = mMouseX <= MOUSE_POSITION_X_ADJUST ? WindowPos.mX - 1 : WindowPos.mX + WindowSize.getWidth() + 1;
+        BorderMouse.mY = mMouseY <= MOUSE_POSITION_Y_ADJUST ? WindowPos.mY - 1 : WindowPos.mY + WindowSize.getHeight() + 1;
+    }
+    // Need to check if the game cursor is near a border on X axis
+    else if (mMouseX <= MOUSE_POSITION_X_ADJUST || mMouseX >= ScreenSize.getWidth() + MOUSE_POSITION_X_ADJUST - 1) {
+        BorderMouse.mX = mMouseX <= MOUSE_POSITION_X_ADJUST ? WindowPos.mX - 1 : WindowPos.mX + WindowSize.getWidth() + 1;
+        BorderMouse.mY = WindowPos.mY + (mMouseY - MOUSE_POSITION_Y_ADJUST) * scale.getHeight();
+    } // Need to check if the game cursor is near a border Y axis
+    else if (mMouseY <= MOUSE_POSITION_Y_ADJUST || mMouseY >= ScreenSize.getHeight() + MOUSE_POSITION_Y_ADJUST - 1) {
+        BorderMouse.mX = WindowPos.mX + (mMouseX - MOUSE_POSITION_X_ADJUST) * scale.getWidth();
+        BorderMouse.mY = mMouseY <= MOUSE_POSITION_Y_ADJUST ? WindowPos.mY - 1 : WindowPos.mY + WindowSize.getHeight() + 1;
+    }
+
+    return BorderMouse;
+}
 void cFodder::Mouse_Inputs_Get() {
 
-	
     if (mParams->mDemoPlayback) {
-
-       // Window_UpdateScreenSize();
 
         auto State = mGame_Data.mDemoRecorded.GetState(mGame_Data.mDemoRecorded.mTick);
         if (State) {
@@ -2941,7 +2955,6 @@ void cFodder::Mouse_Inputs_Get() {
     }
 
     if (mParams->mDemoRecord)
-
         mGame_Data.mDemoRecorded.AddState(mGame_Data.mDemoRecorded.mTick, cStateRecorded{ mInputMouseX, mInputMouseY, mMouseButtonStatus });
 
     Mouse_ButtonCheck();
@@ -3507,20 +3520,30 @@ void cFodder::Sound_Play(sSprite* pSprite, int16 pSoundEffect, int16 pData8) {
 
 void cFodder::Mission_Intro_Helicopter_Start() {
     mHelicopterPosX = 0x01500000;
-    if (mVersionCurrent->isPC())
-        mHelicopterPosY = 0x00260000;
-    else
-        mHelicopterPosY = 0x00300000;
+   // if (mVersionCurrent->isPC())
+    //    mHelicopterPosY = 0x00260000;
+   // else
+        mHelicopterPosY = 0x001E0000;
 
-    mBriefing_Helicopter_Off1 = mBriefing_Helicopter_Offsets[0];
-    mBriefing_Helicopter_Off2 = mBriefing_Helicopter_Offsets[1];
-    mBriefing_Helicopter_Off3 = mBriefing_Helicopter_Offsets[2];
-    mBriefing_Helicopter_Off4 = &mBriefing_Helicopter_Offsets[3];
+    /*if (mVersionCurrent->isPC()) {
+        mBriefing_Helicopter_Off1 = mBriefing_Helicopter_Offsets[0];
+        mBriefing_Helicopter_Off2 = mBriefing_Helicopter_Offsets[1];
+        mBriefing_Helicopter_Off3 = mBriefing_Helicopter_Offsets[2];
+        mBriefing_Helicopter_Off4 = &mBriefing_Helicopter_Offsets[3];
+    }
+    else {*/
+        mBriefing_Helicopter_Off1 = mBriefing_Helicopter_Offsets_Amiga[0];
+        mBriefing_Helicopter_Off2 = mBriefing_Helicopter_Offsets_Amiga[1];
+        mBriefing_Helicopter_Off3 = mBriefing_Helicopter_Offsets_Amiga[2];
+        mBriefing_Helicopter_Off4 = &mBriefing_Helicopter_Offsets_Amiga[3];
+    //}
+
     mBriefing_ParaHeli_Frame = 0;
     mBriefing_Helicopter_Moving = -1;
     word_428D8 = -1;
-
     sub_1594F();
+    mBriefing_Helicopter_Off1 = 0x180;
+
 }
 
 void cFodder::Briefing_Update_Helicopter() {
@@ -3553,9 +3576,9 @@ void cFodder::Briefing_Update_Helicopter() {
 
     if (mBriefing_Helicopter_Off2 != word_428B8) {
         if (word_428B8 >= mBriefing_Helicopter_Off2)
-            word_428B8 -= 4;
+            word_428B8 -= 1;
         else
-            word_428B8 += 4;
+            word_428B8 += 1;
     }
 
 	if (mVersionCurrent->isCannonFodder1() && mVersionCurrent->isPC())
@@ -3857,7 +3880,12 @@ void cFodder::Campaign_Selection() {
 
         // Single Map Mode?
         if (CampaignFile == "Single Map" || CampaignFile == "Random Map") {
-            
+
+            if (CampaignFile == "Random Map") {
+                mStartParams->mSkipRecruit = false;
+                mParams->mSkipRecruit = false;
+            }
+
             mGame_Data.mCampaign.SetSingleMapCampaign();
             mCustom_Mode = eCustomMode_Map;
             return;
@@ -8467,7 +8495,7 @@ int16 cFodder::Sprite_Find_In_Region(sSprite* pSprite, sSprite*& pData24, int16 
 
     pData24 = mSprites.data();
 
-    for (int32 Data1C = mParams->mSpritesMax - 2; Data1C >= 0; --Data1C, ++pData24) {
+    for (int32 Data1C = mParams->getSpritesMax() - 2; Data1C >= 0; --Data1C, ++pData24) {
         int16 Data4 = pData24->field_18;
 
         if (!mSprite_Can_Be_RunOver[Data4])
@@ -9577,7 +9605,7 @@ void cFodder::Service_Draw_String(const std::string& pText, const uint8* pData28
         Data4 += 0x1A;
         goto loc_18259;
     loc_1823C:;
-        if (Data4 >= 0x5A) {
+        if (Data4 > 0x5A) {
             Data4 -= 0x61;
             Data4 += 0x39;
         }
@@ -9838,7 +9866,7 @@ void cFodder::Sprite_Frame_Modifier_Update() {
             mSprite_Frame1_Modifier ^= -2;
 
         mSprite_Frame_2 += mSprite_Frame2_Modifier;
-        if (mSprite_Frame2_Modifier == 0 || mSprite_Frame2_Modifier == 2)
+        if (mSprite_Frame_2 == 0 || mSprite_Frame_2 == 2)
             mSprite_Frame2_Modifier ^= -2;
     }
 
@@ -9856,7 +9884,7 @@ void cFodder::Sprite_Frame_Modifier_Update() {
 void cFodder::Sprite_Handle_Loop() {
     sSprite* Data20 = mSprites.data();
 
-    for (int32 Data1C = mParams->mSpritesMax - 2; Data1C > 0; --Data1C, ++Data20) {
+    for (int32 Data1C = mParams->getSpritesMax() - 2; Data1C > 0; --Data1C, ++Data20) {
 
         if (Data20->field_0 == -32768)
             continue;
@@ -9991,6 +10019,7 @@ void cFodder::Sprite_Handle_Player(sSprite *pSprite) {
 
         goto loc_191C3;
 
+    // Enemy in range
     loc_1904A:;
         Data0 = tool_RandomGet() & 0x1F;
 
@@ -10133,7 +10162,7 @@ loc_1931E:;
         goto loc_19403;
 
     Sprite_Handle_Troop_Direct_TowardMouse(pSprite);
-    Sprite_Handle_Troop_FrameUnk(pSprite);
+    Sprite_Handle_Troop_Animation(pSprite);
     return;
 
 loc_19338:;
@@ -10141,7 +10170,7 @@ loc_19338:;
     mTmp_FrameNumber = pSprite->field_A;
     mSprite_Bumped_Into_SquadMember = 0;
 
-    sub_1FCF2(pSprite);
+    Sprite_Handle_Troop_Speed(pSprite);
     Data0 = pSprite->field_26;
     if (Data0 < 0)
         goto loc_1946D;
@@ -10183,7 +10212,7 @@ loc_193D6:;
 
 loc_19403:;
     pSprite->field_5A = 0;
-    sub_1FDE7(pSprite);
+    Sprite_Handle_Troop_Direct_TowardWeaponTarget_WithRestore(pSprite);
     return;
 
 loc_19414:;
@@ -10224,7 +10253,7 @@ loc_194A0:;
 
     if (!word_3AA1D) {
         mDirectionMod = 0;
-        Sprite_Handle_Troop_FrameUnk(pSprite);
+        Sprite_Handle_Troop_Animation(pSprite);
         pSprite->field_A = 0;
         return;
     }
@@ -10238,7 +10267,7 @@ loc_194A0:;
 
 loc_1957A:;
     pSprite->field_3A = 0;
-    Sprite_Handle_Troop_FrameUnk(pSprite);
+    Sprite_Handle_Troop_Animation(pSprite);
 
 }
 
@@ -10436,7 +10465,7 @@ void cFodder::Sprite_Handle_Enemy(sSprite* pSprite) {
     //loc_19A5D
     Sprite_XY_Store(pSprite);
     sub_2A3D4(pSprite);
-    sub_1FCF2(pSprite);
+    Sprite_Handle_Troop_Speed(pSprite);
 
     if (pSprite->field_45) {
         pSprite->field_45--;
@@ -10448,7 +10477,7 @@ void cFodder::Sprite_Handle_Enemy(sSprite* pSprite) {
 
 loc_19A89:;
     word_3ABB1 = 0;
-    sub_1FDE7(pSprite);
+    Sprite_Handle_Troop_Direct_TowardWeaponTarget_WithRestore(pSprite);
     goto loc_19A9C;
 
 loc_19A96:;
@@ -10456,7 +10485,7 @@ loc_19A96:;
 
 loc_19A9C:;
     pSprite->field_22 = eSprite_PersonType_AI;
-    Sprite_Handle_Troop_FrameUnk(pSprite);
+    Sprite_Handle_Troop_Animation(pSprite);
 
     if (word_3ABB1)
         return;
@@ -11823,7 +11852,7 @@ void cFodder::Sprite_Handle_Enemy_Rocket(sSprite* pSprite) {
     pSprite->field_55 = 0;
     pSprite->field_A = 0;
 
-    sub_1FDE7(pSprite);
+    Sprite_Handle_Troop_Direct_TowardWeaponTarget_WithRestore(pSprite);
     pSprite->field_A = 2;
 }
 
@@ -14147,7 +14176,7 @@ loc_1E3D2:;
         if (pSprite->field_59)
             pSprite->field_8 = Data28[(Data8 + 0x10) / 2];
 
-        // FIX: Added as only 2 frames exist for all sprites in mSprite_AnimationPtrs
+        // FIX: Added as only 2 frames exist for -most- sprites in mSprite_AnimationPtrs
         pSprite->field_A %= 2;
     }
     //loc_1E50A
@@ -14906,7 +14935,7 @@ void cFodder::Sprite_Handle_Troop_Direct_TowardWeaponTarget(sSprite* pSprite) {
 
     Sprite_Direction_Between_Points(pSprite, Data0, Data4);
     Sprite_Set_Direction_To_Next(pSprite);
-    Sprite_Handle_Troop_FrameUnk(pSprite);
+    Sprite_Handle_Troop_Animation(pSprite);
 }
 
 void cFodder::Sprite_Handle_Troop_Direct_TowardMouse(sSprite* pSprite) {
@@ -14921,11 +14950,27 @@ void cFodder::Sprite_Handle_Troop_Direct_TowardMouse(sSprite* pSprite) {
     Sprite_Direction_Between_Points(pSprite, Data0, Data4);
     Sprite_Set_Direction_To_Next(pSprite);
 
+    int StoredAnim = pSprite->field_8;
     mStoredSpriteFrame = pSprite->field_A;
-    Sprite_Handle_Troop_FrameUnk(pSprite);
+    Sprite_Handle_Troop_Animation(pSprite);
 
     if (!pSprite->field_43)
         return;
+
+    // FIX: This isn't original. and was added due to a case where the animation is changed
+    //      in Sprite_Handle_Troop_Animation, but the frame is pointing to a frame not
+    //      available in the new animation (issue 64)
+    if ((pSprite->field_8 >= 0x10 && pSprite->field_8 < 0x18) ||
+        (pSprite->field_8 >= 0x20 && pSprite->field_8 < 0x28)) {
+        if(mStoredSpriteFrame >= 1)
+            mStoredSpriteFrame = 0;
+    }
+
+    if ((pSprite->field_8 >= 0x18 && pSprite->field_8 < 0x20) ||
+        (pSprite->field_8 >= 0x28 && pSprite->field_8 < 0x30)) {
+        if (mStoredSpriteFrame >= 2)
+            mStoredSpriteFrame = 0;
+    }
 
     pSprite->field_A = mStoredSpriteFrame;
 }
@@ -14948,7 +14993,7 @@ void cFodder::Sprite_XY_Restore(sSprite* pSprite) {
 }
 
 void cFodder::Sprite_Handle_Player_Adjust_Movement_Speed(sSprite* pSprite) {
-    sub_1FCF2(pSprite);
+    Sprite_Handle_Troop_Speed(pSprite);
 
     if (pSprite->field_4F)
         return;
@@ -14998,7 +15043,7 @@ void cFodder::Sprite_Draw_Row_Update(sSprite* pSprite) {
         goto loc_1F753;
 
     // Leaving water for the edge/bank
-    if (pSprite->field_60 == eTerrainFeature_WaterEdge)
+    if (pSprite->field_60 != eTerrainFeature_WaterEdge)
         goto loc_1F75D;
 
     pSprite->field_52 = 5;
@@ -15011,12 +15056,11 @@ loc_1F75D:;
     Sprite_Handle_Player_Close_To_SquadMember(pSprite);
 }
 
-void cFodder::Sprite_Handle_Troop_FrameUnk(sSprite* pSprite) {
+void cFodder::Sprite_Handle_Troop_Animation(sSprite* pSprite) {
     int16 Data0, Data8;
     sSprite* Dataa30 = 0;
     sMapTarget* Data30 = 0;
     const int16* Data28 = 0;
-    sMission_Troop* Data24 = 0;
 
     // Is Human
     if (pSprite->field_22 == eSprite_PersonType_Human)
@@ -15082,27 +15126,20 @@ loc_1F7FF:;
         //seg005:020C
         if (Dataa30 != pSprite) {
 
-            Data0 = Dataa30->field_0;
-
-            if (Data0 != Dataa30->field_26)
+            if (Dataa30->field_0 != Dataa30->field_26)
                 goto loc_1F9C0;
-
-            Data0 = Dataa30->field_4;
-            if (Data0 != Dataa30->field_28)
+            if (Dataa30->field_4 != Dataa30->field_28)
                 goto loc_1F9C0;
 
             if (!word_3B2F3)
                 goto loc_1F9C0;
         }
         else {
-
-            Data0 = pSprite->field_0;
-            if (Data0 != pSprite->field_26)
+            if (pSprite->field_0 != pSprite->field_26)
                 goto loc_1F9C0;
 
             //seg005:0246
-            Data0 = pSprite->field_4;
-            if (Data0 != pSprite->field_28)
+            if (pSprite->field_4 != pSprite->field_28)
                 goto loc_1F9C0;
         }
     }
@@ -15117,138 +15154,114 @@ loc_1F7FF:;
     return;
 
 loc_1F9C0:;
-    if (pSprite->field_54 != 2)
-        goto loc_1FA39;
+    // Fired Bullet
+    if (pSprite->field_54 == 2) {
 
-    if (word_3AA1D) {
-        if (word_3AA1D == 2) {
-            pSprite->field_8 = *(Data28 + Data8);
-            pSprite->field_A = mSprite_Frame_3;
-            // FIX: Added as only 2 frames exist for all sprites in mSprite_AnimationPtrs
-            pSprite->field_A %= 2;
+        if (word_3AA1D) {
+            if (word_3AA1D == 2) {
+                pSprite->field_8 = *(Data28 + Data8);
+                pSprite->field_A = mSprite_Frame_3 % 3;
+            }
+            else {
+                //loc_1F9FF
+                pSprite->field_8 = *(Data28 + Data8);
+                pSprite->field_A = 0;
+            }
         }
-        else {
-            //loc_1F9FF
-            pSprite->field_8 = *(Data28 + Data8);
-            pSprite->field_A = 0;
-        }
-    }
-    //loc_1FA20
-    --pSprite->field_57;
-    if (pSprite->field_57)
-        return;
+        //loc_1FA20
+        --pSprite->field_57;
+        if (pSprite->field_57)
+            return;
 
-    pSprite->field_54 = 0;
-    goto loc_1FB00;
-
-loc_1FA39:;
-    if (pSprite->field_54 != 1)
+        pSprite->field_54 = 0;
         goto loc_1FB00;
-
-    Data0 = *(Data28 + Data8 + 0x28);
-
-    if (Data0 != pSprite->field_8) {
-        pSprite->field_8 = *(Data28 + Data8 + 0x28);
-        pSprite->field_55 = 0;
-        pSprite->field_A = 0;
-        return;
     }
-    //loc_1FA93
-    pSprite->field_55++;
-    if (pSprite->field_55 != 2)
-        return;
-    pSprite->field_55 = 0;
-    pSprite->field_A++;
-    mStoredSpriteFrame = pSprite->field_A;
 
-    if (pSprite->field_A < 3)
-        return;
-    mStoredSpriteFrame = 0;
-    pSprite->field_A = 0;
-    pSprite->field_54 = 0;
-    pSprite->field_5A = 0;
-    pSprite->field_55 = 0;
+    // loc_1FA39: Chucked Grenade
+    if (pSprite->field_54 == 1) {
+        Data0 = *(Data28 + Data8 + 0x28);
+
+        if (Data0 != pSprite->field_8) {
+            pSprite->field_8 = Data0;
+            pSprite->field_55 = 0;
+            pSprite->field_A = 0;
+            return;
+        }
+        //loc_1FA93
+        pSprite->field_55++;
+        if (pSprite->field_55 != 2)
+            return;
+        pSprite->field_55 = 0;
+        pSprite->field_A++;
+        mStoredSpriteFrame = pSprite->field_A;
+
+        if (pSprite->field_A < 3)
+            return;
+
+        mStoredSpriteFrame = 0;
+        pSprite->field_A = 0;
+        pSprite->field_54 = 0;
+        pSprite->field_5A = 0;
+        pSprite->field_55 = 0;
+    }
 
 loc_1FB00:;
-    if (pSprite->field_54 != 3)
-        goto loc_1FBA4;
+    // Fired Rocket
+    if (pSprite->field_54 == 3) {
 
-    Data0 = *(Data28 + Data8 + 0x38);
-    if (Data0 != pSprite->field_8) {
-        pSprite->field_8 = Data0;
+        Data0 = *(Data28 + Data8 + 0x38);
+        if (Data0 != pSprite->field_8) {
+            pSprite->field_8 = Data0;
+            pSprite->field_55 = 0;
+            pSprite->field_A = 0;
+            return;
+        }
+        //loc_1FB5A
+        pSprite->field_55++;
+        if (pSprite->field_55 != 7)
+            return;
+
         pSprite->field_55 = 0;
         pSprite->field_A = 0;
-        return;
+        pSprite->field_54 = 0;
+        pSprite->field_5A = 0;
+        pSprite->field_55 = 0;
     }
-    //loc_1FB5A
-    pSprite->field_55++;
-    if (pSprite->field_55 != 7)
-        return;
 
-    pSprite->field_55 = 0;
-    pSprite->field_A = 0;
-    pSprite->field_54 = 0;
-    pSprite->field_5A = 0;
-    pSprite->field_55 = 0;
-
-loc_1FBA4:;
-    // If in water
+    // loc_1FBA4: If in water
     if (pSprite->field_4F) {
-
         pSprite->field_8 = *(Data28 + Data8 + 0x20);
-        Data0 = mSprite_Frame_1;
-
         // Reached another troop?
-        if (pSprite->field_43)
-            Data0 = mSprite_Frame_2;
-
-        Data0 &= 1;
-        pSprite->field_A = Data0;
-        goto loc_1FCD7;
+        pSprite->field_A = (pSprite->field_43) ? mSprite_Frame_2 : mSprite_Frame_1;
+        pSprite->field_A &= 1;
     }
-    //loc_1FBF8
-    if (!word_3AA1D) {
+    else if (!word_3AA1D) {
+        //loc_1FBF8
         pSprite->field_8 = *(Data28 + Data8 + 0x18);
         pSprite->field_A = mSprite_Frame_2;
-        goto loc_1FCD7;
     }
-    //loc_1FC29
-    if (pSprite->field_8 == *(Data28 + Data8 + 0x18) && pSprite->field_A) {
+    else if (pSprite->field_8 == *(Data28 + Data8 + 0x18) && pSprite->field_A) {
+        //loc_1FC29
         pSprite->field_A = 0;
-        goto loc_1FCD7;
+    }
+    else {
+        //loc_1FC61
+        Data0 = (pSprite->field_46_mission_troop) ? 
+                 pSprite->field_46_mission_troop->field_6 : 0x70;
+
+        pSprite->field_8 = (Data0 == 3) ? *(Data28 + Data8 + 0) : *(Data28 + Data8);
+        pSprite->field_A = (Data0 != 2) ? mSprite_Frame_1 : mSprite_Frame_3;
     }
 
-    //loc_1FC61
-    Data24 = pSprite->field_46_mission_troop;
-
-    if (Data24 == 0)
-        Data0 = 0x70;
-    else
-        Data0 = Data24->field_6;
-
-    if (Data0 == 3)
-        pSprite->field_8 = *(Data28 + Data8 + 0);
-    else
-        pSprite->field_8 = *(Data28 + Data8);
-
-    //loc_1FCB4
-    if (Data0 != 2)
-        pSprite->field_A = mSprite_Frame_1;
-    else
-        pSprite->field_A = mSprite_Frame_3;
-
-loc_1FCD7:;
-    // Bumped into other troop
-    if (!mSprite_Bumped_Into_SquadMember)
-        return;
-
-    // FIX: Added % as only 2 frames exist for all sprites in mSprite_AnimationPtrs
-    // There is one case where mTmp_FrameNumber isnt set by the current sprite
-    pSprite->field_A = mTmp_FrameNumber % 2;
-    mSprite_Bumped_Into_SquadMember = 0;
+    if (mSprite_Bumped_Into_SquadMember) {
+        // FIX: Added % as only 2 frames exist for -most- sprites in mSprite_AnimationPtrs
+        // There is also one case where mTmp_FrameNumber isnt set by the current sprite
+        pSprite->field_A = mTmp_FrameNumber % 2;
+        mSprite_Bumped_Into_SquadMember = 0;
+    }
 }
 
-void cFodder::sub_1FCF2(sSprite* pSprite) {
+void cFodder::Sprite_Handle_Troop_Speed(sSprite* pSprite) {
     int16 Data0;
 
     pSprite->field_36 = 0x10;
@@ -15298,7 +15311,7 @@ loc_1FDDC:;
     pSprite->field_36 = 6;
 }
 
-void cFodder::sub_1FDE7(sSprite* pSprite) {
+void cFodder::Sprite_Handle_Troop_Direct_TowardWeaponTarget_WithRestore(sSprite* pSprite) {
 
     int16 Data0 = pSprite->field_2E;
     int16 Data4 = pSprite->field_30;
@@ -15308,7 +15321,7 @@ void cFodder::sub_1FDE7(sSprite* pSprite) {
 
     mStoredSpriteFrame = pSprite->field_A;
 
-    Sprite_Handle_Troop_FrameUnk(pSprite);
+    Sprite_Handle_Troop_Animation(pSprite);
     if (!pSprite->field_43)
         return;
 
@@ -16066,6 +16079,8 @@ void cFodder::Intro_OpenFodder() {
 		if (CF2)
 			VersionSwitch(mVersions->GetForCampaign("Cannon Fodder 2", mParams->mDefaultPlatform));
 
+        Mouse_Setup();
+
 		// Random intro
 		auto Tileset = static_cast<eTileTypes>(((uint8)tool_RandomGet()) % eTileTypes_Hid);
 		Mission_Intro_Play(true, Tileset);
@@ -16276,7 +16291,7 @@ void cFodder::SetActiveSpriteSheetPtr(const sSpriteSheet** pSpriteSheet) {
 void cFodder::intro_Retail() {
 
     // Disabled: GOG CD Version doesn't require a manual check
-    //  CopyProtection();
+    CopyProtection();
     mGraphics->Load_Sprite_Font();
 
 	mSound->Music_Play(CANNON_BASED(16, 20));
@@ -16369,12 +16384,12 @@ void cFodder::Video_SurfaceRender(const bool pRestoreSurface) {
         mSurface->Restore();
 }
 
-void cFodder::Cycle_End() {
+void cFodder::Cycle_End(int64 pSleep) {
 #ifndef _OFED
     if (mParams->mSleepDelta) {
         mTicksDiff = SDL_GetTicks() - mTicksDiff;
-        mTicks = mTicksDiff * 40 / 1000;
-        sleepLoop(mParams->mSleepDelta * 1000 / 40 - mTicksDiff);
+        mTicks = mTicksDiff * pSleep / 1000;
+        sleepLoop(mParams->mSleepDelta * 1000 / pSleep - mTicksDiff);
         mTicksDiff = SDL_GetTicks();
     }
 #endif
@@ -16965,7 +16980,7 @@ int16 cFodder::Sprite_Get_Free_Max42(int16& pData0, sSprite*& pData2C, sSprite*&
             pData2C = mSprites.data();
 
             // Loop all sprites
-             for (int32_t Data1C = mParams->mSpritesMax - 5; Data1C >= 0; --Data1C, ++pData2C) {
+             for (int32_t Data1C = mParams->getSpritesMax() - 5; Data1C >= 0; --Data1C, ++pData2C) {
 
                 // Sprite free?
                 if (pData2C->field_0 != -32768)
@@ -16990,7 +17005,7 @@ int16 cFodder::Sprite_Get_Free_Max42(int16& pData0, sSprite*& pData2C, sSprite*&
             pData2C = mSprites.data();
 
             // Loop all sprites
-             for (int32_t Data1C = mParams->mSpritesMax - 4; Data1C >= 0; --Data1C, ++pData2C) {
+             for (int32_t Data1C = mParams->getSpritesMax() - 4; Data1C >= 0; --Data1C, ++pData2C) {
 
                 // Sprite free?
                 if (pData2C->field_0 != -32768)
@@ -17009,9 +17024,9 @@ int16 cFodder::Sprite_Get_Free_Max42(int16& pData0, sSprite*& pData2C, sSprite*&
         }
         else {
             // Only looking for 1 sprite
-            pData2C = &mSprites[mParams->mSpritesMax - 3];
+            pData2C = &mSprites[mParams->getSpritesMax() - 3];
 
-            for (int32 Data1C = mParams->mSpritesMax - 3; Data1C >= 0; --Data1C) {
+            for (int32 Data1C = mParams->getSpritesMax() - 3; Data1C >= 0; --Data1C) {
 
                 // Free?
                 if (pData2C->field_0 == -32768) {
@@ -17040,8 +17055,8 @@ int16 cFodder::Sprite_Get_Free_Max29(int16& pData0, sSprite*& pData2C, sSprite*&
     if (pData0 == 2)
         goto loc_21B91;
 
-    pData2C = &mSprites[mParams->mSpritesMax - 16];
-     for (int32_t Data1C = mParams->mSpritesMax - 16; Data1C >= 0; --Data1C, --pData2C) {
+    pData2C = &mSprites[mParams->getSpritesMax() - 16];
+     for (int32_t Data1C = mParams->getSpritesMax() - 16; Data1C >= 0; --Data1C, --pData2C) {
 
         if (pData2C->field_0 == -32768) {
             pData2C->Clear();
@@ -17060,7 +17075,7 @@ loc_21B4B:;
 loc_21B91:;
     pData2C = mSprites.data();
 
-     for (int32_t Data1C = mParams->mSpritesMax - 17; Data1C >= 0; --Data1C, ++pData2C) {
+     for (int32_t Data1C = mParams->getSpritesMax() - 17; Data1C >= 0; --Data1C, ++pData2C) {
 
         if (pData2C->field_0 != -32768)
             continue;
@@ -18282,7 +18297,9 @@ void cFodder::About() {
     g_Fodder->mPhase_Aborted = false;
 }
 
-void cFodder::CreateRandom() {
+void cFodder::CreateRandom(sMapParams pParams) {
+    mSurface->clearBuffer();
+
 	mGame_Data.mCampaign.CreateCustomCampaign();
 	mGame_Data.mCampaign.setRandom(true);
 	mGame_Data.mCampaign.setName("Random");
@@ -18293,9 +18310,7 @@ void cFodder::CreateRandom() {
 		mParams->mRandomFilename = "random";
 	}
 
-	sMapParams Params(mRandom.get());
-
-	Map_Create(Params);
+	Map_Create(pParams);
 
 	if (mParams->mScriptRun.size() == 0)
 		mParams->mScriptRun = "test.js";
@@ -18354,8 +18369,9 @@ void cFodder::Start() {
 	mSound = 0;
     mVersionDefault = 0;
     mVersionCurrent = 0;
-    VersionSwitch(mVersions->GetRetail( mParams->mDefaultPlatform, mParams->mDefaultGame ));
 
+    VersionSwitch(mVersions->GetRetail( mParams->mDefaultPlatform, mParams->mDefaultGame ));
+    
     if (!mVersionCurrent) {
         VersionSwitch(mVersions->GetDemo());
 
@@ -18368,7 +18384,7 @@ void cFodder::Start() {
         mGame_Data.mDemoRecorded.mRecordedPlatform = mVersionCurrent->mPlatform;
 
     mGame_Data.mDemoRecorded.save();
-
+    
     // Play the intro
 	Intro_OpenFodder();
 
@@ -18442,14 +18458,18 @@ bool cFodder::GameOverCheck() {
 			// Demo / Custom Mission restart
 			if (mVersionCurrent->isDemo() && mCustom_Mode != eCustomMode_Set && !mVersionCurrent->isAmigaTheOne())
 				return false;
-
+            
 			// Reached last map in this mission set?
-			if (!mGame_Data.Phase_Next()) {
+			if (!mGame_Data.Phase_Next() && !mVersionDefault->isRandom() && mCustom_Mode != eCustomMode_Map) {
 
 				mGame_Data.mGameWon = true;
 				WonGame();
 				return true;
 			}
+
+            if (mVersionDefault->isRandom()) {
+                mGame_Data.mMission_Recruitment = -1;
+            }
 		}
 	}
 
