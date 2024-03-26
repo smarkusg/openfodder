@@ -1,0 +1,137 @@
+From 8c5789ab2b578224c589ae0e3cc7603019e56f3e Mon Sep 17 00:00:00 2001
+From: Robert Crossfield <robcrossfield@gmail.com>
+Date: Mon, 19 Feb 2024 11:35:49 +1100
+Subject: [PATCH 27/50] Add mouse lock to window, and initial state set via ini
+
+---
+ README.md              |  1 +
+ Run                    |  2 +-
+ Source/Fodder.cpp      | 25 ++++++++++++++++---------
+ Source/Parameters.cpp  |  3 +++
+ Source/Parameters.hpp  |  4 ++++
+ openfodder.ini.example |  3 +++
+ 6 files changed, 28 insertions(+), 10 deletions(-)
+
+diff --git a/README.md b/README.md
+index e60286f..d036df3 100644
+--- a/README.md
++++ b/README.md
+@@ -112,6 +112,7 @@ Open Fodder supports six demos from the Amiga platform, and three retail release
+ * F9:    Make current squad invincible (with --cheats enabled)
+ * F10:   Complete current map (with --cheats enabled)
+ * F11:   Toggle full screen
++* F12:   Lock cursor to window
+ * +:     Increase window size
+ * -:     Decrease window size  
+ 
+diff --git a/Run b/Run
+index b9dacb1..070a608 160000
+--- a/Run
++++ b/Run
+@@ -1 +1 @@
+-Subproject commit b9dacb100ccf5fbe5218eeb91f24ee46d7cf54db
++Subproject commit 070a6086c62164e859fc3274b75b5f536fa9d902
+diff --git a/Source/Fodder.cpp b/Source/Fodder.cpp
+index 93a00d0..35c716a 100644
+--- a/Source/Fodder.cpp
++++ b/Source/Fodder.cpp
+@@ -2740,6 +2740,9 @@ void cFodder::keyProcess(uint8 pKeyCode, bool pPressed) {
+     if (pKeyCode == SDL_SCANCODE_F11 && pPressed)
+         mWindow->ToggleFullscreen();
+ 
++    if (pKeyCode == SDL_SCANCODE_F12 && pPressed)
++        mParams->mMouseLocked = !mParams->mMouseLocked;
++
+     if (pKeyCode == SDL_SCANCODE_ESCAPE && pPressed && mPhase_Aborted)
+         mPhase_Aborted2 = true;
+ 
+@@ -2870,14 +2873,18 @@ void cFodder::Mouse_Cursor_Handle() {
+         }
+     } else {
+         if (!mWindow->isFullscreen()) {
+-            cPosition BorderMouse = Mouse_GetOnBorderPosition();
++            if (!mParams->mMouseLocked) {
++                cPosition BorderMouse = Mouse_GetOnBorderPosition();
+ 
+-            // Cursor leaving window
+-            if (BorderMouse.mX || BorderMouse.mY) {
+-                CursorGrabbed = false;
+-                mWindow->SetRelativeMouseMode(false);
+-                mWindow->SetMousePosition(BorderMouse);
+-                return;
++                // Cursor leaving window
++                if (BorderMouse.mX || BorderMouse.mY) {
++                    CursorGrabbed = false;
++
++                    mWindow->SetRelativeMouseMode(false);
++                    mWindow->SetMousePosition(BorderMouse);
++
++                    return;
++                }
+             }
+         }
+ 
+@@ -2891,8 +2898,8 @@ void cFodder::Mouse_Cursor_Handle() {
+                     WasClicked = false;
+             } else {
+                 // Calc the distance from the cursor to the centre of the window
+-                mInputMouseX = mMouseX + static_cast<int16>(mMouse_EventLastPositionRelative.mX * 1.5);
+-                mInputMouseY = mMouseY + static_cast<int16>(mMouse_EventLastPositionRelative.mY * 1.5);
++                mInputMouseX = mMouseX + static_cast<int16>(mMouse_EventLastPositionRelative.mX);
++                mInputMouseY = mMouseY + static_cast<int16>(mMouse_EventLastPositionRelative.mY);
+                 mMouse_EventLastPositionRelative = { 0,0 };
+                 
+             }
+diff --git a/Source/Parameters.cpp b/Source/Parameters.cpp
+index d52b076..1d082a7 100644
+--- a/Source/Parameters.cpp
++++ b/Source/Parameters.cpp
+@@ -381,6 +381,9 @@ bool sFodderParameters::ProcessINI() {
+ 			if (ini.get("alternate-mouse", "false") == "true")
+ 				mMouseAlternative = true;
+ 
++			if (ini.get("mouse-locked", "false") == "true")
++				mMouseLocked = true;
++
+ 			if (ini.get("copyprotection", "false") == "true")
+ 				mCopyProtection = true;
+ 		}
+diff --git a/Source/Parameters.hpp b/Source/Parameters.hpp
+index 79a0ec5..35f0094 100644
+--- a/Source/Parameters.hpp
++++ b/Source/Parameters.hpp
+@@ -36,6 +36,8 @@ public:
+ 	bool mSkipService;          // Skip mission debrief
+ 
+ 	bool mMouseAlternative;		// Use the alternate mouse behaviour
++	bool mMouseLocked;			// Mouse is locked to window
++
+ 	bool mWindowMode;           // Start in a window
+ 	size_t mWindowScale;		// Start with window scaled at
+ 	size_t mWindowRows;
+@@ -105,6 +107,8 @@ public:
+ 		mMissionNumber = 0;
+ 		mPhaseNumber = 0;
+ 		mMouseAlternative = false;
++		mMouseLocked = false;
++
+ 		mWindowMode = false;
+ 		mWindowScale = 0;
+ 
+diff --git a/openfodder.ini.example b/openfodder.ini.example
+index 86b5088..9c8404a 100644
+--- a/openfodder.ini.example
++++ b/openfodder.ini.example
+@@ -25,6 +25,9 @@ rows=0
+ ; Don't set mouse cursor x/y, use raw values (this alters the behaviour of the in-game camera window) -- Useful for VMs
+ alternate-mouse=false
+ 
++; The mouse is locked to the window
++mouse-locked=false
++
+ ; Enable copy protection screen on Dos CD release
+ copyprotection=false
+ 
+-- 
+2.25.1
+

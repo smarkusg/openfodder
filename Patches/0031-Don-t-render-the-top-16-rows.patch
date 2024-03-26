@@ -1,0 +1,53 @@
+From 884ee736e5007164d17507eb9bbebaacc6209984 Mon Sep 17 00:00:00 2001
+From: Robert Crossfield <robcrossfield@gmail.com>
+Date: Thu, 14 Mar 2024 03:40:01 +1100
+Subject: [PATCH 31/50] Don't render the top 16 rows
+
+---
+ Source/Surface.cpp | 16 +++++++++-------
+ 1 file changed, 9 insertions(+), 7 deletions(-)
+
+diff --git a/Source/Surface.cpp b/Source/Surface.cpp
+index 3434e64..a770de5 100644
+--- a/Source/Surface.cpp
++++ b/Source/Surface.cpp
+@@ -213,27 +213,29 @@ void cSurface::draw() {
+ 	uint32_t* bufferTarget = reinterpret_cast<uint32_t*>(mSDLSurface->pixels);
+ 	const int width = mSDLSurface->w, height = mSDLSurface->h;
+ 	const int skipX = 16;
++	const int skipY = 16;
+ 
+ 	clearSDLSurface(0);
+ 
+-	for (int y = 0; y < height; ++y) {
+-		if (bufferCurrent >= bufferEnd) break;
++	// Skip 'skipY' rows of pixels
++	bufferCurrent += width * skipY;
++	bufferTarget += width * skipY;
+ 
++	for (int y = skipY; y < height; ++y) {
+ 		// Skip first 'skipX' pixels
+ 		bufferCurrent += skipX;
+ 		bufferTarget += skipX;
+ 
+ 		// Process remaining pixels
+ 		for (int x = skipX; x < width; ++x) {
+-			if (bufferCurrent >= bufferEnd) return;
++			if (bufferCurrent >= bufferEnd) break;
+ 
+ 			uint8_t currentPixel = *bufferCurrent++;
+ 			if (currentPixel) {
+-				*bufferTarget++ = (currentPixel < g_MaxColors) ? mPaletteSDL[currentPixel] : 0;
+-			}
+-			else {
+-				++bufferTarget;
++				*bufferTarget = (currentPixel < g_MaxColors) ? mPaletteSDL[currentPixel] : 0;
+ 			}
++
++			++bufferTarget;
+ 		}
+ 	}
+ 
+-- 
+2.25.1
+

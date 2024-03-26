@@ -1,0 +1,87 @@
+From d3556790301494cada524e9fd76e3a28da16b357 Mon Sep 17 00:00:00 2001
+From: Robert Crossfield <robcrossfield@gmail.com>
+Date: Tue, 12 Mar 2024 12:07:26 +1100
+Subject: [PATCH 28/50] Dont render the first 16 pixels, they are not rendered
+ anyway
+
+---
+ Source/Surface.cpp | 55 +++++++++++++++++++++++-----------------------
+ 1 file changed, 27 insertions(+), 28 deletions(-)
+
+diff --git a/Source/Surface.cpp b/Source/Surface.cpp
+index 31ec966..3434e64 100644
+--- a/Source/Surface.cpp
++++ b/Source/Surface.cpp
+@@ -205,42 +205,41 @@ inline void cSurface::paletteSDLColorSet( size_t id, cPalette *pPalette ) {
+  * Draw the Surface Buffer to SDLSurface, using the surface palette
+  */
+ void cSurface::draw() {
++	if (mIsLoadedImage)
++		return;
+ 
+-    if (mIsLoadedImage)
+-        return;
++	const uint8_t* bufferCurrent = mSurfaceBuffer;
++	const uint8_t* const bufferEnd = mSurfaceBuffer + mSurfaceBufferSize;
++	uint32_t* bufferTarget = reinterpret_cast<uint32_t*>(mSDLSurface->pixels);
++	const int width = mSDLSurface->w, height = mSDLSurface->h;
++	const int skipX = 16;
+ 
+-	const uint8 *bufferCurrent = mSurfaceBuffer;
+-	const uint8 *bufferCurrentMax = (mSurfaceBuffer + mSurfaceBufferSize);
+-
+-	uint32 *bufferTarget = (uint32*)mSDLSurface->pixels;
+-	uint32 *bufferTargetMax = (uint32*) (((uint8*) mSDLSurface->pixels) + (mSDLSurface->h * mSDLSurface->pitch));
+-	
+ 	clearSDLSurface(0);
+ 
+-	// Loop until we reach the destination end
+-	while( bufferTarget < bufferTargetMax ) {
+-			
+-		// Break out if we pass the source end
+-		if( bufferCurrent >= bufferCurrentMax )
+-			break;
+-
+-		// Non zero value to draw
+-		if (*bufferCurrent) {
+-
+-			// Value in palette range?
+-			if (*bufferCurrent < g_MaxColors)
+-				*bufferTarget = mPaletteSDL[*bufferCurrent];
+-			else
+-				*bufferTarget = 0;
+-		}
++	for (int y = 0; y < height; ++y) {
++		if (bufferCurrent >= bufferEnd) break;
++
++		// Skip first 'skipX' pixels
++		bufferCurrent += skipX;
++		bufferTarget += skipX;
++
++		// Process remaining pixels
++		for (int x = skipX; x < width; ++x) {
++			if (bufferCurrent >= bufferEnd) return;
+ 
+-		// Next Source/Destination
+-		++bufferCurrent;
+-		++bufferTarget;
++			uint8_t currentPixel = *bufferCurrent++;
++			if (currentPixel) {
++				*bufferTarget++ = (currentPixel < g_MaxColors) ? mPaletteSDL[currentPixel] : 0;
++			}
++			else {
++				++bufferTarget;
++			}
++		}
+ 	}
+ 
+-	if(mTexture)
++	if (mTexture) {
+ 		SDL_UpdateTexture(mTexture, NULL, mSDLSurface->pixels, mSDLSurface->pitch);
++	}
+ }
+ 
+ /**
+-- 
+2.25.1
+
