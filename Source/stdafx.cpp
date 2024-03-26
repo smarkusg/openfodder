@@ -23,7 +23,7 @@
 #include "stdafx.hpp"
 
 #ifdef __AMIGAOS4__
-#define AMIGA_VERSION "OpenFooder 1.8 (23.03.2024)"
+#define AMIGA_VERSION "OpenFooder 1.8 (26.03.2024)"
 static const char *__attribute__((used)) stackcookie = "$STACK: 500000";
 static const char *__attribute__((used)) version_tag = "$VER: " AMIGA_VERSION ;
 #endif
@@ -67,6 +67,22 @@ void tool_EndianSwap(uint8 *pBuffer, size_t pSize) {
 	}
 #endif
 }
+
+#ifdef __AMIGAOS4__
+void tool_EndianSwap_org(uint8 *pBuffer, size_t pSize) {
+	uint8 *pDest = pBuffer;
+
+	pSize /= 2;
+
+	while (pSize--) {
+		uint8 al = *pBuffer++;
+		uint8 ah = *pBuffer++;
+
+		*pDest++ = ah;
+		*pDest++ = al;
+	}
+}
+#endif
 
 std::string tool_StripLeadingZero(const std::string& pValue) {
 	std::string Final = pValue;

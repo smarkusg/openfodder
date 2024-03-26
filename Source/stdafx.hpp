@@ -57,6 +57,9 @@ enum eDataType {
 
 int			start(int argc, char *argv[]);
 void		tool_EndianSwap( uint8* pBuffer, size_t pSize );
+#ifdef __AMIGAOS4__
+void		tool_EndianSwap_org( uint8* pBuffer, size_t pSize );
+#endif
 std::string tool_StripLeadingZero( const std::string& pValue );
 uint16		tool_DecimalToBinaryCodedDecimal( uint16 pDecimal );
 

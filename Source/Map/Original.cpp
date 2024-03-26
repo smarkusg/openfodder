@@ -84,7 +84,11 @@ void cOriginalMap::loadCF1Map(tSharedBuffer pMapData) {
 	mParams.mWidth = readBEWord(mData->data() + 0x54);
 	mParams.mHeight = readBEWord(mData->data() + 0x56);
 
+#ifdef __AMIGAOS4__
+	tool_EndianSwap_org(mData->data() + 0x60, mData->size() - 0x60);
+#else
 	tool_EndianSwap(mData->data() + 0x60, mData->size() - 0x60);
+#endif
 }
 
 void cOriginalMap::loadCF1Spt(tSharedBuffer pSpriteData, bool pCF2) {

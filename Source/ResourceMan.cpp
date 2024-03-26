@@ -157,6 +157,7 @@ void cResourceMan::findVersions() {
 
 						ReleaseFiles.insert(std::make_pair(FileLower, base + baseFile));
 
+#ifndef __AMIGAOS4__
 						if (MD5 != File.mChecksum) {
 							if (MD5.length() == 0) {
 								//std::cout << KnownVersion.mName << ": " << KnownVersion.mFiles[FileNo].mName;
@@ -167,7 +168,7 @@ void cResourceMan::findVersions() {
 								std::cout << " Unknown MD5: " << MD5 << "\n";
 							}
 						}
-
+#endif
 						break;
 					}
 				}
