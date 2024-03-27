@@ -2592,7 +2592,9 @@ void cFodder::Map_Overview_Prepare() {
 
     mSurfaceMapOverview = new cSurface(Size * 16, Size * 16);
     mSurfaceMapOverview->clearBuffer();
-
+#ifdef __AMIGAOS4__
+    tool_EndianSwap_org(mMap->data() + 0x60, mMap->size() - 0x60);
+#endif
     int16* MapPtr = (int16*)(mMap->data() + 0x60);
 
     mSurfaceMapTop = mSurfaceMapLeft = 0;
