@@ -2748,15 +2748,11 @@ void cFodder::keyProcess(uint8 pKeyCode, bool pPressed) {
     if (pKeyCode == SDL_SCANCODE_ESCAPE && pPressed && mPhase_Aborted)
         mPhase_Aborted2 = true;
 
-//markus lol wiesza sie 
     if (pKeyCode == SDL_SCANCODE_ESCAPE && pPressed) {
-//        mPhase_Aborted = true;
-//        mPhase_EscapeKeyAbort = true;
-
-	SDL_Quit();
-        exit(1);
-
+        mPhase_Aborted = true;
+        mPhase_EscapeKeyAbort = true;
     }
+
     // In Mission and not on map overview
     if (mPhase_In_Progress && !mPhase_ShowMapOverview) {
 
@@ -18420,9 +18416,14 @@ void cFodder::Start() {
 		if (!(mParams->mCampaignName.size() && Campaign_Load(mParams->mCampaignName))) {
 			Campaign_Selection();
 			// Exit pushed?
-			if (mGUI_SaveLoadAction == 1)
+			if (mGUI_SaveLoadAction == 1) }
+#ifdef __AMIGAOS4__
+				//test AOS4 force exit
+				SDL_Quit();
+    				exit(0);
+#endif
 				return;
-
+}
 			if (mGUI_SaveLoadAction == 4) {
 				About();
 				goto Start;
