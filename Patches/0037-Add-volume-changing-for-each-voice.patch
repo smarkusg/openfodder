@@ -1,0 +1,960 @@
+From 0d6e17603ae756b606d044f6d138af63d2ca59c3 Mon Sep 17 00:00:00 2001
+From: Robert Crossfield <robcrossfield@gmail.com>
+Date: Sun, 17 Mar 2024 16:42:20 +1100
+Subject: [PATCH 37/50] Add volume changing for each voice Fade songs in/out
+ Helicopter movements now match Amiga
+
+---
+ Source/Amiga/Graphics_Amiga.cpp |  74 +++++----
+ Source/Amiga/Sound_Amiga.cpp    |  19 ++-
+ Source/Amiga/paula.cpp          |   7 +-
+ Source/Amiga/paula.hpp          |   2 +-
+ Source/Fodder.cpp               | 282 ++++++++++++++++++++++++--------
+ Source/Fodder.hpp               |  28 +++-
+ Source/PC/Graphics_PC.cpp       |  19 ++-
+ Source/Parameters.cpp           |   3 +-
+ 8 files changed, 306 insertions(+), 128 deletions(-)
+
+diff --git a/Source/Amiga/Graphics_Amiga.cpp b/Source/Amiga/Graphics_Amiga.cpp
+index 5c88162..74d282c 100644
+--- a/Source/Amiga/Graphics_Amiga.cpp
++++ b/Source/Amiga/Graphics_Amiga.cpp
+@@ -290,6 +290,7 @@ void cGraphics_Amiga::Mission_Intro_DrawHelicopter( uint16 pID ) {
+ 
+ 	if (Sprite_OnScreen_Check( true )) {
+ 		mFodder->mVideo_Draw_Columns >>= 3;
++		mFodder->mVideo_Draw_PosY += 16;
+         Video_Draw_8_Alt();
+ 	}
+ }
+@@ -938,41 +939,57 @@ void cGraphics_Amiga::Video_Draw_8(cSurface *pTarget, const uint8* RowPallete) {
+ 	}
+ }
+ 
+-void cGraphics_Amiga::Video_Draw_8_Alt(const uint8* RowPallete) {
++void cGraphics_Amiga::Video_Draw_8_Alt(const uint8* RowPalette) {
+ 
+-    uint8*	di = mSurface->GetSurfaceBuffer();
+-    uint8* 	si = mFodder->mVideo_Draw_FrameDataPtr;
++	uint8* di = mSurface->GetSurfaceBuffer();
++	uint8* si = mFodder->mVideo_Draw_FrameDataPtr;
+ 
+-    di += mSurface->GetWidth() * mFodder->mVideo_Draw_PosY;
+-    di += mFodder->mVideo_Draw_PosX;
++	int screenWidth = mSurface->GetWidth();
++	int screenHeight = mSurface->GetHeight();
+ 
+-    mFodder->mDraw_Source_SkipPixelsPerRow = (mBMHD_Current->mWidth >> 3) - mFodder->mVideo_Draw_Columns;
+-    mFodder->mDraw_Dest_SkipPixelsPerRow = mSurface->GetWidth() - (mFodder->mVideo_Draw_Columns * 8);
++	// Adjust start position
++	di += screenWidth * mFodder->mVideo_Draw_PosY;
++	di += mFodder->mVideo_Draw_PosX;
+ 
+-    // Height
+-    for (int16 dx = mFodder->mVideo_Draw_Rows; dx > 0; --dx) {
++	mFodder->mDraw_Source_SkipPixelsPerRow = (mBMHD_Current->mWidth >> 3) - mFodder->mVideo_Draw_Columns;
++	mFodder->mDraw_Dest_SkipPixelsPerRow = screenWidth - (mFodder->mVideo_Draw_Columns * 8);
+ 
+-        uint8 Palette = mFodder->mVideo_Draw_PaletteIndex;
+-        if (RowPallete) {
+-            // TODO: palette should degrade closer to top/bottom of screen 
+-            //int16 bx = mFodder->mVideo_Draw_PosY + dx;
+-            //Palette = 1;// RowPallete[bx];
+-        }
++	// Height
++	for (int16 dx = 0; dx < mFodder->mVideo_Draw_Rows; ++dx) {
+ 
+-        // Width
+-        for (int16 cx = 0; cx < mFodder->mVideo_Draw_Columns; ++cx) {
++		uint8 Palette = mFodder->mVideo_Draw_PaletteIndex;
++		if (RowPalette) {
++			// TODO: palette should degrade closer to top/bottom of screen 
++			//int16 bx = mFodder->mVideo_Draw_PosY + dx;
++			//Palette = 1;// RowPallete[bx];
++		}
+ 
+-            DrawPixels_8(si, di);
++		int currentY = mFodder->mVideo_Draw_PosY + dx;
++		if (currentY >= 0 && currentY < screenHeight) {
+ 
+-            di += 8;
+-            si += 1;
+-        }
++			// Width
++			for (int16 cx = 0; cx < mFodder->mVideo_Draw_Columns; ++cx) {
+ 
+-        si += mFodder->mDraw_Source_SkipPixelsPerRow;
+-        di += mFodder->mDraw_Dest_SkipPixelsPerRow;
+-    }
++				int currentX = mFodder->mVideo_Draw_PosX + (cx * 8);
++				if (currentX >= 0 && currentX <= screenWidth) {
++					DrawPixels_8(si, di);
++				}
++
++				di += 8;
++				si += 1;
++			}
++		}
++		else {
++			// Skip entire row
++			si += mFodder->mVideo_Draw_Columns;
++		}
++
++		si += mFodder->mDraw_Source_SkipPixelsPerRow;
++		di += mFodder->mDraw_Dest_SkipPixelsPerRow;
++	}
+ }
+ 
++
+ void cGraphics_Amiga::Video_Draw_16_Offset(int16 pCx) {
+ 	uint8* pDs = mFodder->mVideo_Draw_FrameDataPtr;
+ 	uint8* di = mSurface->GetSurfaceBuffer() + 16;
+@@ -1523,9 +1540,6 @@ void cGraphics_Amiga::Mission_Intro_Play(const bool pShowHelicopter, const eTile
+ 		mFodder->mVideo_Draw_PosY = 100;
+ 		Video_Draw_16_Offset(word_42871);
+ 
+-		if (mFodder->mBriefing_Helicopter_Moving == -1)
+-			mFodder->Briefing_Update_Helicopter();
+-
+         if (pShowHelicopter) {
+             // Front
+             mFodder->mVideo_Draw_PosX = mFodder->mHelicopterPosX >> 16;
+@@ -1578,6 +1592,8 @@ void cGraphics_Amiga::Mission_Intro_Play(const bool pShowHelicopter, const eTile
+ 		if (mSurface->isPaletteAdjusting())
+ 			mSurface->palette_FadeTowardNew();
+ 
++		mFodder->Briefing_Helicopter_Check();
++		++mFodder->mInterruptTick;
+ 		// This loop runs fast enough that the cursor can get stuck at the window border
+ 		// as focus events havnt been received for the mouse leaving the window
+ 		++mouseCheck;
+@@ -1588,7 +1604,7 @@ void cGraphics_Amiga::Mission_Intro_Play(const bool pShowHelicopter, const eTile
+         mFodder->Video_SurfaceRender();
+ 
+ 		if (mFodder->mMouse_Exit_Loop || mFodder->mPhase_Aborted) {
+-			mFodder->word_428D8 = 0;
++			mFodder->mBriefing_Helicopter_NotDone = 0;
+ 			mSurface->paletteNew_SetToBlack();
+ 			mFodder->mMouse_Exit_Loop = false;
+             mFodder->mPhase_Aborted = 0;
+@@ -1596,7 +1612,7 @@ void cGraphics_Amiga::Mission_Intro_Play(const bool pShowHelicopter, const eTile
+ 
+ 		mFodder->mWindow->Cycle();
+ 		mFodder->eventsProcess();
+-	} while (mFodder->word_428D8 || mFodder->mSurface->isPaletteAdjusting());
++	} while (mFodder->mBriefing_Helicopter_NotDone || mFodder->mSurface->isPaletteAdjusting());
+ 
+ 	mFodder->mMouse_Exit_Loop = false;
+ }
+diff --git a/Source/Amiga/Sound_Amiga.cpp b/Source/Amiga/Sound_Amiga.cpp
+index c87c189..4d14c5d 100644
+--- a/Source/Amiga/Sound_Amiga.cpp
++++ b/Source/Amiga/Sound_Amiga.cpp
+@@ -249,18 +249,25 @@ void cSound_Amiga::Music_SetVolume(int16 pChannel, int16 pVolume) {
+ 	if (!mCurrentMusic)
+ 		return;
+ 
+-	mCurrentMusic->volumeMax = pVolume;
+-//	auto channel = mCurrentMusic->getChannel(pChannel);
+-//	channel->volume = pVolume;
++	if (pChannel == -1) {
++		for (int Ch = 0; Ch < mCurrentMusic->NUM_VOICES; ++Ch) {
++			mCurrentMusic->volumeMax[Ch] = pVolume;
++		}
++		return;
++	}
++
++	mCurrentMusic->volumeMax[pChannel] = pVolume;
+ }
+ 
+ int16 cSound_Amiga::Music_GetVolume(int16 pChannel) {
+ 	if (!mCurrentMusic)
+ 		return 0;
+ 
+-	return mCurrentMusic->volumeMax;
+-	//auto channel = mCurrentMusic->getChannel(pChannel);
+-	//return channel->volume;
++	if (pChannel == -1) {
++		pChannel = 0;
++	}
++
++	return mCurrentMusic->volumeMax[pChannel];
+ }
+ 
+ void cSound_Amiga::Sound_Stop() {
+diff --git a/Source/Amiga/paula.cpp b/Source/Amiga/paula.cpp
+index 45aeb65..61a74c5 100644
+--- a/Source/Amiga/paula.cpp
++++ b/Source/Amiga/paula.cpp
+@@ -60,7 +60,10 @@ Paula::Paula(bool stereo, int rate, uint32 interruptFreq, FilterMode filterMode,
+ 	_timerBase = 1;
+ 	_playing = false;
+ 	_end = true;
+-	volumeMax = 0x40;
++	volumeMax[0] = 0x40;
++	volumeMax[1] = 0x40;
++	volumeMax[2] = 0x40;
++	volumeMax[3] = 0x40;
+ }
+ 
+ Paula::~Paula() {
+@@ -218,7 +221,7 @@ int Paula::readBufferIntern(int16 *buffer, const int numSamples) {
+ 			// processing, to obtain the correct output 'rate'.
+ 			frac_t rate = doubleToFrac(_periodScale / _voice[voice].period);
+ 			// Cap the volume
+-			_voice[voice].volume = std::min((uint8) volumeMax, _voice[voice].volume);
++			_voice[voice].volume = std::min((uint8) volumeMax[voice], _voice[voice].volume);
+ 
+ 
+ 			Channel &ch = _voice[voice];
+diff --git a/Source/Amiga/paula.hpp b/Source/Amiga/paula.hpp
+index 11d8c04..3f337e1 100644
+--- a/Source/Amiga/paula.hpp
++++ b/Source/Amiga/paula.hpp
+@@ -105,7 +105,7 @@ public:
+ 		float rc[NUM_VOICES][5];
+ 	};
+ 
+-	uint8 volumeMax;
++	uint8 volumeMax[NUM_VOICES];
+ 
+ 	Paula(bool stereo = false, int rate = 44100, unsigned int interruptFreq = 0,
+ 	      FilterMode filterMode = kFilterModeDefault, int periodScaleDivisor = 1);
+diff --git a/Source/Fodder.cpp b/Source/Fodder.cpp
+index 119bc5e..8d1144d 100644
+--- a/Source/Fodder.cpp
++++ b/Source/Fodder.cpp
+@@ -49,6 +49,22 @@ const int16 mBriefing_Helicopter_Offsets[] =
+     0x0170, 0x0064, 0x000A, 
+     -1, -1, -1
+ };
++/*
++const int16 mBriefing_Helicopter_Offsets_Amiga[] =
++{
++  0x0180, 0x0020, 0x0005,
++  0x01A0, 0x0020, 0x001E,
++  0x01C0, 0x0020, 0x0014,
++  0x01E0, 0x0010, 0x0014,
++  0x0000, 0x0008, 0x0014,
++  0x0080, 0x0008, 0x003C,
++  0x0100, 0x0008, 0x0014,
++  0x01A0, 0x0004, 0x002E,
++  0x0170, 0x0032, 0x0010,       // Originally this line is 0x170, 0x32, 0x46
++  0x0170, 0x0020, 0x0010,       //  and this one didnt exist
++
++  -1, -1, -1
++};*/
+ 
+ const int16 mBriefing_Helicopter_Offsets_Amiga[] =
+ {
+@@ -60,9 +76,7 @@ const int16 mBriefing_Helicopter_Offsets_Amiga[] =
+   0x0080, 0x0008, 0x003C, 
+   0x0100, 0x0008, 0x0014, 
+   0x01A0, 0x0004, 0x002E, 
+-  0x0170, 0x0032, 0x0010,       // Originally this line is 0x170, 0x32, 0x46
+-  0x0170, 0x0020, 0x0010,       //  and this one didnt exist
+-
++  0x0170, 0x0032, 0x0046,
+   -1, -1, -1
+ };
+ 
+@@ -179,7 +193,7 @@ cFodder::cFodder(std::shared_ptr<cWindow> pWindow) {
+     mInput_LastKey = 0;
+     mCustom_ExitMenu = 0;
+ 
+-    word_428D8 = 0;
++    mBriefing_Helicopter_NotDone = 0;
+     word_3A05F = 0;
+     byte_44AC0 = 0;
+     mSoundDisabled = false;
+@@ -194,7 +208,12 @@ cFodder::cFodder(std::shared_ptr<cWindow> pWindow) {
+     mBriefing_Helicopter_Off1 = 0;
+     mBriefing_Helicopter_Off2 = 0;
+     mBriefing_Helicopter_Off3 = 0;
+-    mBriefing_Helicopter_Off4 = 0;
++
++    mBriefing_Helicopter_Moving = 0;
++    mBriefing_Helicopter_Pos = 0;
++
++    mInterruptTick = 0;
++
+     mBriefing_ParaHeli_Frame = 0;
+     mBriefing_Helicopter_Moving = 0;
+     mTroop_InRange_Callpad = 0;
+@@ -406,7 +425,7 @@ int16 cFodder::Phase_Cycle() {
+     Sound_Tick();
+ 	Squad_EnteredVehicle_TimerTick();
+ 	Squad_Set_CurrentVehicle();
+-    sub_87774();
++    Music_Check_MapTile_TrackChange();
+ 
+ 	// No squad is selected, so set count down timer
+ 	if (mSquad_Selected < 0 && !mSquad_Select_Timer)
+@@ -507,6 +526,7 @@ int16 cFodder::Phase_Loop() {
+ 	//  1 = Phase Running
+     for (result = 1; result == 1; result = Phase_Cycle()) {
+ 		
++        ++mInterruptTick;
+ 		Cycle_End();
+     }
+ 
+@@ -532,6 +552,8 @@ void cFodder::Game_Handle() {
+         }
+     }
+ 
++    Music_Increase_Channel_Volume();
++
+     //loc_108AE
+     if (mSquad_SwitchWeapon) {
+         --mSquad_SwitchWeapon;
+@@ -552,8 +574,10 @@ void cFodder::Game_Handle() {
+         return;
+     }
+ 
+-    //word_80618
+-    sub_878A2();
++    if(!(mInterruptTick & 3))
++        Music_Fade_SwitchTrack();
++
++    //sub_A3B14
+ 
+     if (!mSoundEffectToPlay)
+         return;
+@@ -1000,8 +1024,9 @@ void cFodder::Phase_EngineReset() {
+ 
+     mTroop_InRange_Callpad = 0;
+     mMusicTrack_unk = 0;
+-    mMusicCurrentTrack = 0;
+-    mMusicTargetVolume = 0;
++    mMusic_CurrentTrack = 0;
++    mMusic_TargetVolume = 0;
++    mMusic_SlowVolumeDecrease = 0;
+     word_829F6 = 0;
+ }
+ 
+@@ -1815,7 +1840,7 @@ void cFodder::Map_Load_TileTracks() {
+ }
+ 
+ 
+-void cFodder::sub_87774() {
++void cFodder::Music_Check_MapTile_TrackChange() {
+     if (mPhase_Completed_Timer != 0 || mGame_Data.mGamePhase_Data.mIsComplete || !mMapTile_Music_Play)
+         return;
+ 
+@@ -1872,7 +1897,7 @@ void cFodder::sub_87774() {
+     Music_setup_track_unk(d0, d1);
+ }
+ 
+-void cFodder::sub_878A2() {
++void cFodder::Music_Fade_SwitchTrack() {
+     int16_t d0 = mMusicTrack_unk;
+ 
+     if (d0 == 0)
+@@ -1881,28 +1906,28 @@ void cFodder::sub_878A2() {
+     int8_t d1 = mSound->Music_GetVolume(0);// byte_A4B5E[0x28];
+ 
+     // Changing track?
+-    if (mMusicCurrentTrack != d0) {
++    if (mMusic_CurrentTrack != d0) {
+         --d1;
+ 
+         // Once volume below 8, change to new song
+         if (d1 < 8) {
+             d1 = 8;
+-            mMusicCurrentTrack = d0;
++            mMusic_CurrentTrack = d0;
+             Music_Play_Tileset(d0);
+         }
+     } else {
+ 
+-        if (d1 < mMusicTargetVolume) {
++        if (d1 < mMusic_TargetVolume) {
+             d1++;
+         } else {
+-            d1 = mMusicTargetVolume;
++            d1 = mMusic_TargetVolume;
+             mMusicTrack_unk = 0;
+         }
+     }
+ 
+     //loc_878F4
+     // 
+-    mSound->Music_SetVolume(0, d1);
++    mSound->Music_SetVolume(-1, d1);
+     //byte_A4B5E[0x28] = d1;
+ 
+     if (word_829F6 == 0) {
+@@ -1914,13 +1939,13 @@ void cFodder::Music_setup_track_unk(int16_t d0, int16_t d1) {
+     if (mMusicTrack_unk != 0)
+         return;
+ 
+-    if (mMusicCurrentTrack != d0) {
+-        mMusicTargetVolume = d1;
++    if (mMusic_CurrentTrack != d0) {
++        mMusic_TargetVolume = d1;
+         mMusicTrack_unk = d0;
+     }
+     else {
+         //byte_A4B5E[0x28] = (uint8_t)d1;
+-        mSound->Music_SetVolume(0, d1);
++        mSound->Music_SetVolume(-1, d1);
+ 
+         if (word_829F6 == 0) {
+            // byte_A4B5E[0x29] = (uint8_t)d1;
+@@ -1928,6 +1953,45 @@ void cFodder::Music_setup_track_unk(int16_t d0, int16_t d1) {
+     }
+ }
+ 
++void cFodder::Music_Increase_Channel_Volume() {
++
++    if (word_82176) {
++        int16 d0 = mInterruptTick & 3;
++        if (!d0) {
++            for (int i = 0; i < 4; ++i) {
++                int16 v = mSound->Music_GetVolume(i);
++                if (v < 0x40) {
++                    mSound->Music_SetVolume(i, ++v);
++                }
++            }
++        }
++    }
++
++    if (word_82178) {
++        Music_Decrease_Channel_Volume();
++    }
++
++    if (mMusic_SlowVolumeDecrease) {
++        int16 d0 = mInterruptTick & 0x3F;
++        if (!d0) {
++            Music_Decrease_Channel_Volume();
++        }
++    }
++}
++
++bool cFodder::Music_Decrease_Channel_Volume() {
++    bool ret = false;
++
++    for (int i = 0; i < 4; ++i) {
++        int16 v = mSound->Music_GetVolume(i);
++        if (v > 0) {
++            ret = true;
++            mSound->Music_SetVolume(i, --v);
++        }
++    }
++    return ret;
++}
++
+ /**
+  * Load the Base and Sub Tile BLK Files
+  *
+@@ -2031,6 +2095,21 @@ void cFodder::Map_Load_Resources() {
+     mGraphics->PaletteSet();
+ }
+ 
++void cFodder::Music_Play(int16 pTrack, int16 pSong) {
++
++    word_82176 = -1;
++    word_82178 = 0;
++
++    mSound->Music_Play(pTrack, pSong);
++    mSound->Music_SetVolume(-1, 0);
++}
++
++void cFodder::Music_SetFullVolume() {
++    for (int i = 0; i < 4; ++i) {
++        mSound->Music_SetVolume(i, 0x40);
++    }
++}
++
+ void cFodder::Music_Play_Tileset(int16_t pSong) {
+     mMapTile_Music_Play = true;
+ 
+@@ -2038,8 +2117,7 @@ void cFodder::Music_Play_Tileset(int16_t pSong) {
+         if (pSong == -1)
+             pSong = 2;
+ 
+-        mSound->Music_Play(mMapLoaded->getTileType() + 0x32, pSong);
+-        mSound->Music_SetVolume(0, 0);
++        Music_Play(mMapLoaded->getTileType() + 0x32, pSong);
+     }
+ }
+ 
+@@ -2522,7 +2600,8 @@ void cFodder::Phase_TextSprite_Create_Mission(sSprite* pData2C) {
+     pData2C->field_8 = 0xA2;
+     pData2C->field_18 = eSprite_Text_Mission;
+     if (!mStartParams->mDisableSound)
+-        mSound->Music_Play(6);
++        Music_Play(6);
++    Music_SetFullVolume();
+ }
+ 
+ void cFodder::Phase_TextSprite_Create_Phase(sSprite* pData2C) {
+@@ -2534,7 +2613,9 @@ void cFodder::Phase_TextSprite_Create_Phase(sSprite* pData2C) {
+     pData2C->field_18 = eSprite_Text_Phase;
+     
+     if (!mStartParams->mDisableSound)
+-        mSound->Music_Play(0x0C);
++        Music_Play(0x0C);
++
++    Music_SetFullVolume();
+ }
+ 
+ void cFodder::Phase_TextSprite_Create_Complete(sSprite* pData2C) {
+@@ -2567,7 +2648,8 @@ void cFodder::Phase_Show_TryAgain() {
+     Phase_TextSprite_Create_Again(&mSprites[42]);
+ 
+     if (!mStartParams->mDisableSound)
+-        mSound->Music_Play(0x0F);
++        Music_Play(0x0F);
++    Music_SetFullVolume();
+ }
+ 
+ void cFodder::Phase_TextSprite_Create_Try(sSprite* pData2C) {
+@@ -3317,7 +3399,7 @@ void cFodder::VersionSwitch(const sGameVersion* pVersion) {
+         }
+ 
+         if (!mStartParams->mDisableSound)
+-            mSound->Music_Play(0);
++            Music_Play(0);
+     }
+ 
+ }
+@@ -3559,7 +3641,7 @@ void cFodder::Phase_TextSprite_Create_GameOver(sSprite* pData2C) {
+     pData2C->field_18 = eSprite_Text_GameOver;
+     
+     if (!mStartParams->mDisableSound)
+-        mSound->Music_Play(8);
++        Music_Play(8);
+ }
+ 
+ void cFodder::Mouse_DrawCursor() {
+@@ -3711,33 +3793,46 @@ void cFodder::Sound_Play(sSprite* pSprite, int16 pSoundEffect, int16 pData8) {
+ 
+ void cFodder::Mission_Intro_Helicopter_Start() {
+     mHelicopterPosX = 0x01500000;
+-   // if (mVersionCurrent->isPC())
+-    //    mHelicopterPosY = 0x00260000;
+-   // else
+-        mHelicopterPosY = 0x001E0000;
+-
+-    /*if (mVersionCurrent->isPC()) {
+-        mBriefing_Helicopter_Off1 = mBriefing_Helicopter_Offsets[0];
+-        mBriefing_Helicopter_Off2 = mBriefing_Helicopter_Offsets[1];
+-        mBriefing_Helicopter_Off3 = mBriefing_Helicopter_Offsets[2];
+-        mBriefing_Helicopter_Off4 = &mBriefing_Helicopter_Offsets[3];
+-    }
+-    else {*/
+-        mBriefing_Helicopter_Off1 = mBriefing_Helicopter_Offsets_Amiga[0];
+-        mBriefing_Helicopter_Off2 = mBriefing_Helicopter_Offsets_Amiga[1];
+-        mBriefing_Helicopter_Off3 = mBriefing_Helicopter_Offsets_Amiga[2];
+-        mBriefing_Helicopter_Off4 = &mBriefing_Helicopter_Offsets_Amiga[3];
+-    //}
++    mHelicopterPosY = 0x001E0000;
+ 
++    word_428B8 = 0;
++    mPaletteLevel = 0;
++    word_85BE4 = 0xD0;
++
++    mBriefing_Helicopter_Moving = 0;
++    mBriefing_Helicopter_Pos = 0;
++    mBriefing_Helicopter_Off3 = 0;
++
++    Briefing_Update_Helicopter();
+     mBriefing_ParaHeli_Frame = 0;
+     mBriefing_Helicopter_Moving = -1;
+-    word_428D8 = -1;
+-    sub_1594F();
++    mBriefing_Helicopter_NotDone = -1;
++
++    //Briefing_Helicopter_Check();
++    word_428B6 = 0x180;
+     mBriefing_Helicopter_Off1 = 0x180;
+ 
+ }
+ 
+ void cFodder::Briefing_Update_Helicopter() {
++
++    word_85BE4 = (mHelicopterPosX >> 16) - 0x20;
++    word_85BE6 = (mHelicopterPosY >> 16);
++
++    mBriefing_Helicopter_Off3--;
++
++    if (mBriefing_Helicopter_Off3 < 0) {
++
++        mBriefing_Helicopter_Off1 = mBriefing_Helicopter_Offsets_Amiga[mBriefing_Helicopter_Pos];
++        mBriefing_Helicopter_Off2 = mBriefing_Helicopter_Offsets_Amiga[mBriefing_Helicopter_Pos + 1];
++        mBriefing_Helicopter_Off3 = mBriefing_Helicopter_Offsets_Amiga[mBriefing_Helicopter_Pos + 2];
++
++        if (mBriefing_Helicopter_Off3 < 0)
++            return;
++        
++        mBriefing_Helicopter_Pos += 3; 
++    }
++
+     word_428B6 &= 0x1FE;
+     uint16 bx = word_428B6;
+ 
+@@ -3766,7 +3861,7 @@ void cFodder::Briefing_Update_Helicopter() {
+     word_428B6 &= 0x1FE;
+ 
+     if (mBriefing_Helicopter_Off2 != word_428B8) {
+-        if (word_428B8 >= mBriefing_Helicopter_Off2)
++        if (word_428B8 > mBriefing_Helicopter_Off2)
+             word_428B8 -= 1;
+         else
+             word_428B8 += 1;
+@@ -3777,30 +3872,51 @@ void cFodder::Briefing_Update_Helicopter() {
+ 
+     if (mBriefing_ParaHeli_Frame == 4)
+         mBriefing_ParaHeli_Frame = 0;
++}
+ 
+-    --word_428BA;
+-    if (word_428BA <= 0)
+-        sub_1594F();
++void cFodder::Briefing_Helicopter_Check() {
++    uint16_t d0;
+ 
+-}
++    Music_Increase_Channel_Volume();
++    if (!mMouse_Exit_Loop || !mPhase_Aborted) {
+ 
+-void cFodder::sub_1594F() {
++        if (word_85BE4 > 0x30) {
+ 
+-    word_428B6 = mBriefing_Helicopter_Off1;
+-    word_428B8 = mBriefing_Helicopter_Off2;
+-    word_428BA = mBriefing_Helicopter_Off3;
+-    mBriefing_Helicopter_Off1 = *mBriefing_Helicopter_Off4++;
+-    mBriefing_Helicopter_Off2 = *mBriefing_Helicopter_Off4++;
+-    mBriefing_Helicopter_Off3 = *mBriefing_Helicopter_Off4++;
++            d0 = mInterruptTick & 0x1;
+ 
+-    if (word_428B6 == -1) {
+-        mBriefing_Helicopter_Moving = 0;
+-        word_428D8 = 0;
++            if (d0 == 0) {
+ 
+-        mGraphics->mImageMissionIntro.CopyPalette(mGraphics->mPalette, 0x100, 0);
+-        mSurface->paletteNew_SetToBlack();
++                if (mBriefing_Helicopter_Moving < 0x10) {
++                    mBriefing_Helicopter_Moving++;
++                    mPaletteLevel++;
++                    return;
++                }
++            }
++
++            if (mBriefing_Helicopter_Moving >= 0x10) {
++                Briefing_Update_Helicopter();
++            }
++            return;
++        }
++    }
++
++    d0 = mInterruptTick & 0x1;
++
++    if (d0 == 0) {
++        if (mBriefing_Helicopter_Moving == 0 && mBriefing_Helicopter_NotDone) {
++            mBriefing_Helicopter_NotDone = 0;
++
++            mGraphics->mImageMissionIntro.CopyPalette(mGraphics->mPalette, 0x100, 0);
++            //mSurface->paletteNew_SetToBlack();
++        }
++        else {
++            mBriefing_Helicopter_Moving--;
++            mPaletteLevel--;
++            mSurface->paletteNew_SetToBlack();
++        }
+     }
+ 
++    Briefing_Update_Helicopter();
+ }
+ 
+ void cFodder::Mission_Intro_Draw_OpenFodder() {
+@@ -3985,8 +4101,8 @@ void cFodder::Campaign_Select_Setup() {
+ 	}
+ 
+ 	Campaign_Select_Sprite_Prepare();
+-    mSound->Music_Play(mMapLoaded->getTileType() + 0x32, 4);
+-    mSound->Music_SetVolume(0, 0x10);
++    Music_Play(mMapLoaded->getTileType() + 0x32, 4);
++    mSound->Music_SetVolume(-1, 0x10);
+ 
+ 	if (mGUI_SaveLoadAction != 3) {
+ 		mSurface->palette_FadeTowardNew();
+@@ -9508,6 +9624,8 @@ void cFodder::Service_Show() {
+     if (mParams->mSkipService)
+         return;
+ 
++    word_82176 = 0;
++
+ 	mWindow->SetScreenSize(mVersionCurrent->GetScreenSize());
+     mVersionPlatformSwitchDisabled = true;
+ 
+@@ -9517,7 +9635,7 @@ void cFodder::Service_Show() {
+     mGraphics->SetActiveSpriteSheet(eGFX_SERVICE);
+     mGraphics->PaletteSet();
+ 
+-    mSound->Music_Play(0);
++    Music_Play(0);
+     Service_KIA_Loop();
+ 
+     if(!mVersionCurrent->isAmigaTheOne())
+@@ -9601,7 +9719,8 @@ void cFodder::Service_Promotion_Loop() {
+     mSurface->Save();
+ 
+     do {
+-
++        ++mInterruptTick;
++        Music_Increase_Channel_Volume();
+         Mouse_Inputs_Get();
+         if (mService_Promotion_Exit_Loop == -1 || mMouse_Exit_Loop) {
+             mMouse_Exit_Loop = false;
+@@ -9961,6 +10080,9 @@ void cFodder::Briefing_Show_Ready() {
+     mMouse_Exit_Loop = false;
+ 
+     do {
++        ++mInterruptTick;
++
++        Music_Increase_Channel_Volume();
+         Mouse_Inputs_Get();
+ 
+         if (mPhase_Aborted) {
+@@ -16282,6 +16404,10 @@ void cFodder::Intro_OpenFodder() {
+ 		mOpenFodder_Intro_Done = true;
+ 		if (CF2)
+ 			VersionSwitch(mVersions->GetForCampaign("Cannon Fodder", mParams->mDefaultPlatform));
++
++        while (Music_Decrease_Channel_Volume()) {
++            sleepLoop(1);
++        }
+ 	}
+ }
+ 
+@@ -16411,7 +16537,7 @@ void cFodder::Mission_Intro_Play(const bool pShowHelicopter, eTileTypes pTileset
+     mGraphics->SetActiveSpriteSheet(eGFX_BRIEFING);
+ 
+     mMouse_Exit_Loop = false;
+-    mSound->Music_Play(0x07);
++    Music_Play(0x07);
+     Mission_Intro_Helicopter_Start();
+ 
+     Mission_Intro_Draw_Mission_Name();
+@@ -16489,7 +16615,8 @@ void cFodder::intro_Retail() {
+     CopyProtection();
+     mGraphics->Load_Sprite_Font();
+ 
+-	mSound->Music_Play(CANNON_BASED(16, 20));
++	Music_Play(CANNON_BASED(16, 20));
++    Music_SetFullVolume();
+ 
+     if (mVersionCurrent->isCannonFodder1())
+         intro_LegionMessage();
+@@ -16502,8 +16629,14 @@ void cFodder::intro_Retail() {
+     if (ShowImage_ForDuration("cftitle", CANNON_BASED(0x1F8 / 3, 0x280 / 3)))
+         return;
+ 
+-    if (intro_Play())
++    if (intro_Play()) {
++
++        while (Music_Decrease_Channel_Volume()) {
++            sleepLoop(1);
++        }
++
+         return;
++    }
+ 
+     if (ShowImage_ForDuration("virgpres", 0x2D0 / 3))
+         return;
+@@ -16628,7 +16761,7 @@ void cFodder::WonGame() {
+        // mGraphics->Load_And_Draw_Image("PRETENTIOUS2", 0x100);
+         mGraphics->Load_And_Draw_Image("PRETENTIOUS3", 0x100);
+     } else {
+-        mSound->Music_Play(17);
++        Music_Play(17);
+         mGraphics->Load_And_Draw_Image("WON", 0x100);
+     }
+ 
+@@ -18720,7 +18853,7 @@ int16 cFodder::Briefing_Show() {
+ 			mPhase_Aborted = true;
+ 
+ 			if (!mStartParams->mDisableSound)
+-				mSound->Music_Play(0);
++				Music_Play(0);
+ 
+ 			return 0;
+ 		}
+@@ -18781,6 +18914,7 @@ int16 cFodder::Mission_Loop() {
+         }
+ 
+         GameData_Backup();
++        mMusic_SlowVolumeDecrease = true;
+ 
+         // Retail or Custom Mode
+         if (mVersionCurrent->isRetail() ||
+@@ -18807,7 +18941,11 @@ int16 cFodder::Mission_Loop() {
+ 				break;
+ 		}
+ 
++        while (Music_Decrease_Channel_Volume()) {
++            sleepLoop(1);
++        }
+ 		Phase_Prepare();
++        mMusic_SlowVolumeDecrease = false;
+ 
+         if (!Phase_Loop()) {
+             mKeyCode = 0;
+diff --git a/Source/Fodder.hpp b/Source/Fodder.hpp
+index d902d04..14d7d12 100644
+--- a/Source/Fodder.hpp
++++ b/Source/Fodder.hpp
+@@ -185,8 +185,12 @@ public:
+     bool            mMapTile_Music_Play;
+     
+     int16           mMusicTrack_unk;
+-    int16           mMusicCurrentTrack;
+-    int16           mMusicTargetVolume;
++    int16           mMusic_CurrentTrack;
++    int16           mMusic_TargetVolume;
++    int16           mMusic_SlowVolumeDecrease;
++    
++    int16           word_82176;
++    int16           word_82178;
+     int16           word_829F6;
+ 
+     int16           mCamera_Panning_ToTarget;
+@@ -469,6 +473,8 @@ public:
+     int16           mMouseSpriteNew;
+     int16           mMouseSetToCursor;
+     int16           mMouseDisabled;
++    int16           mInterruptTick;
++    int16           mPaletteLevel;
+ 
+     uint16          mSquad_Grenade_SplitMode;
+     uint16          mSquad_Rocket_SplitMode;
+@@ -523,7 +529,8 @@ public:
+     size_t          mDraw_Dest_SkipPixelsPerRow;
+     uint16          mVideo_Draw_ColumnsMax;
+ 
+-
++    int32           word_85BE4;
++    int32           word_85BE6;
+     int16           word_428B6;
+     int16           word_428B8;
+     int16          word_428BA;
+@@ -533,10 +540,10 @@ public:
+     int16           mBriefing_Helicopter_Off1;
+     int16           mBriefing_Helicopter_Off2;
+     int16           mBriefing_Helicopter_Off3;
+-    const int16*    mBriefing_Helicopter_Off4;
++    int16           mBriefing_Helicopter_Pos;
+     uint16          mBriefing_ParaHeli_Frame;
+     int16           mBriefing_Helicopter_Moving;
+-    int16           word_428D8;
++    int16           mBriefing_Helicopter_NotDone;
+ 
+     int16           mMouseButtonStatus;
+     int16           mInputMouseX;
+@@ -609,8 +616,9 @@ public:
+     void			Map_Load_Sprites_Count();
+     void            Map_Load_Resources();
+     void            Map_Load_TileTracks();
+-    void            sub_87774();
+-    void            sub_878A2();
++
++    void            Music_Check_MapTile_TrackChange();
++    void            Music_Fade_SwitchTrack();
+ 
+     void			Map_Add_Structure(const sStructure& pStructure, int16 pTileX, int16 pTileY);
+ 
+@@ -618,8 +626,12 @@ public:
+     int16			Tile_FindType(const eTerrainFeature pType);
+     std::vector<int16> Tile_FindType(const eTerrainFeature pType, const eTerrainFeature pType2);
+ 
++    void		    Music_Play(int16 pTrack, int16 pSong = -1);
+     void            Music_Play_Tileset(int16_t pSong = -1);
+     void            Music_setup_track_unk(int16_t d0, int16_t d1);
++    void            Music_Increase_Channel_Volume();
++    bool            Music_Decrease_Channel_Volume();
++    void            Music_SetFullVolume();
+ 
+     // Mission Functions
+     void            Phase_Soldiers_Count();
+@@ -702,7 +714,7 @@ public:
+     void            Mission_Intro_Helicopter_Start();
+ 	void            Mission_Intro_Draw_Mission_Name();
+ 
+-    void            sub_1594F();
++    void            Briefing_Helicopter_Check();
+ 
+     void            CopyProtection();
+     void            CopyProtection_EncodeInput();
+diff --git a/Source/PC/Graphics_PC.cpp b/Source/PC/Graphics_PC.cpp
+index 4dd2a20..a77294d 100644
+--- a/Source/PC/Graphics_PC.cpp
++++ b/Source/PC/Graphics_PC.cpp
+@@ -956,9 +956,6 @@ void cGraphics_PC::Mission_Intro( const std::vector<cPosition>& pPositions, cons
+ 	mSurface->paletteSet(mPalette );
+ 
+ 	do {
+-		if (mFodder->mBriefing_Helicopter_Moving == -1)
+-			mFodder->Briefing_Update_Helicopter();
+-
+         if (mSurface->isPaletteAdjusting())
+             mSurface->palette_FadeTowardNew();
+ 
+@@ -997,7 +994,7 @@ void cGraphics_PC::Mission_Intro( const std::vector<cPosition>& pPositions, cons
+ 		Mission_Intro_Render_2( mImageMissionIntro.mData, word_4286F );
+ 
+ 		// Front
+-		word_4286F += 6;
++		word_4286F += 5;
+ 		if (word_4286F >= 320)
+ 			word_4286F = 0;
+ 
+@@ -1016,6 +1013,9 @@ void cGraphics_PC::Mission_Intro( const std::vector<cPosition>& pPositions, cons
+ 		if (word_42875 >= 320)
+ 			word_42875 = 0;
+ 
++		mFodder->Briefing_Helicopter_Check();
++		++mFodder->mInterruptTick;
++
+ 		// This loop runs fast enough that the cursor can get stuck at the window border
+ 		// as focus events havnt been received for the mouse leaving the window
+ 		++mouseCheck;
+@@ -1024,12 +1024,13 @@ void cGraphics_PC::Mission_Intro( const std::vector<cPosition>& pPositions, cons
+ 			mFodder->Mouse_Inputs_Get();
+ 		}
+         mFodder->Video_SurfaceRender();
+-		mFodder->mWindow->Cycle();
+-		mFodder->eventsProcess();
+ 
+-		if (mFodder->mMouseButtonStatus || (mFodder->mPhase_Aborted && mFodder->word_428D8)) {
+-			mFodder->word_428D8 = 0;
++		if (mFodder->mMouseButtonStatus || (mFodder->mPhase_Aborted && mFodder->mBriefing_Helicopter_NotDone)) {
++			mFodder->mBriefing_Helicopter_NotDone = 0;
+ 			mSurface->paletteNew_SetToBlack();
+ 		}
+-	} while (mFodder->word_428D8 || mFodder->mSurface->isPaletteAdjusting());
++		mFodder->mWindow->Cycle();
++		mFodder->eventsProcess();
++
++	} while (mFodder->mBriefing_Helicopter_NotDone || mFodder->mSurface->isPaletteAdjusting());
+ }
+diff --git a/Source/Parameters.cpp b/Source/Parameters.cpp
+index e0099d2..15ee709 100644
+--- a/Source/Parameters.cpp
++++ b/Source/Parameters.cpp
+@@ -312,7 +312,8 @@ bool sFodderParameters::ProcessCLI(int argc, char *argv[]) {
+ 		mCheatsEnabled = true;
+ #endif
+ 
+-		if (mMissionNumber || mPhaseNumber) {
++		// Skip intro and recruit screen if a campaign and mission/phase is provided
++		if (mCampaignName.length() && (mMissionNumber || mPhaseNumber)) {
+ 			mSkipRecruit = true;
+ 			mSkipIntro = true;
+ 		}
+-- 
+2.25.1
+

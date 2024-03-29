@@ -1,0 +1,403 @@
+From 3c4f5998b38fef15b75cc13391955b279c62fb23 Mon Sep 17 00:00:00 2001
+From: Robert Crossfield <robcrossfield@gmail.com>
+Date: Fri, 15 Mar 2024 04:26:54 +1100
+Subject: [PATCH 33/50] Fix single map mode when recruit screen is disabled
+ Stop playing sound if its replaced by higher priority sound
+
+---
+ Source/Amiga/Sound_Amiga.cpp | 22 +++++----
+ Source/Amiga/Sound_Amiga.hpp |  2 +-
+ Source/Fodder.cpp            | 59 +++++++++++++++++------
+ Source/PC/Sound_PC.cpp       |  2 +-
+ Source/PC/Sound_PC.hpp       |  2 +-
+ Source/PC/Sound_PC2.cpp      |  2 +-
+ Source/PC/Sound_PC2.hpp      |  2 +-
+ Source/Recruits.cpp          | 91 ++++++++++++------------------------
+ Source/Sound.hpp             |  2 +-
+ Source/Version.hpp           |  4 ++
+ 10 files changed, 98 insertions(+), 90 deletions(-)
+
+diff --git a/Source/Amiga/Sound_Amiga.cpp b/Source/Amiga/Sound_Amiga.cpp
+index ef8da6a..38c68eb 100644
+--- a/Source/Amiga/Sound_Amiga.cpp
++++ b/Source/Amiga/Sound_Amiga.cpp
+@@ -64,7 +64,7 @@ cSound_Amiga::cSound_Amiga() {
+ 
+ 	mAudioSpec = 0;
+ 	mCurrentMusic = 0;
+-
++	mCurrentSfx.resize(5);
+ 	devicePrepare();
+ }
+ 
+@@ -90,6 +90,8 @@ void cSound_Amiga::audioBufferFill( short *pBuffer, int pBufferSize ) {
+ 
+ 		if (mCurrentSfx.size()) {
+ 			for ( auto SfxIT : mCurrentSfx) {
++				if (!SfxIT)
++					continue;
+ 
+ 				if (!SfxIT->endOfStream())
+ 					SfxIT->readBuffer( pBuffer, pBufferSize / 2 );
+@@ -97,12 +99,11 @@ void cSound_Amiga::audioBufferFill( short *pBuffer, int pBufferSize ) {
+ 
+ 			for ( auto SfxIT = mCurrentSfx.begin(); SfxIT != mCurrentSfx.end();) {
+ 
+-				if ((*SfxIT)->endOfStream()) {
++				if ((*SfxIT) && (*SfxIT)->endOfStream()) {
+ 					delete (*SfxIT);
+ 
+-					mCurrentSfx.erase( SfxIT );
+-					SfxIT = mCurrentSfx.begin();
+-					continue;
++					*SfxIT = 0;
++					//SfxIT = mCurrentSfx.begin();
+ 				}
+ 
+ 				++SfxIT;
+@@ -184,7 +185,7 @@ int16 cSound_Amiga::Track_Load( sSound* pSound, int16 pTrack ) {
+ 	return Number;
+ }
+ 
+-void cSound_Amiga::Sound_Play( int16 pTileset, int16 pSoundEffect, int16 pVolume ) {
++void cSound_Amiga::Sound_Play( int16 pTileset, int16 pSoundEffect, int16 pVolume, int16 pIndex) {
+ 
+ 	Track_Load( &mSound_Sfx, pTileset + 0x32 );
+ 
+@@ -193,7 +194,11 @@ void cSound_Amiga::Sound_Play( int16 pTileset, int16 pSoundEffect, int16 pVolume
+ 			Audio::AudioStream* Sfx = Audio::makeRjp1Stream( mSound_Sfx.mCurrentMusicSongData, mSound_Sfx.mCurrentMusicInstrumentData, -pSoundEffect );
+ 			if (Sfx) {
+ 				Sfx->mVolume = pVolume;
+-				mCurrentSfx.push_back(Sfx);
++				if (mCurrentSfx[pIndex]) {
++					delete mCurrentSfx[pIndex];
++					mCurrentSfx[pIndex] = 0;
++				}
++				mCurrentSfx[pIndex] = Sfx;
+ 			}
+ 		}
+ 
+@@ -240,9 +245,10 @@ void cSound_Amiga::Sound_Stop() {
+ 		for (auto SfxIT : mCurrentSfx) {
+ 
+ 			delete SfxIT;
++			SfxIT = 0;
+ 		}
+ 
+-		mCurrentSfx.clear();
++		//mCurrentSfx.clear();
+ 
+ 		SDL_UnlockMutex(mLock);
+ 	}
+diff --git a/Source/Amiga/Sound_Amiga.hpp b/Source/Amiga/Sound_Amiga.hpp
+index 00114db..c36f00f 100644
+--- a/Source/Amiga/Sound_Amiga.hpp
++++ b/Source/Amiga/Sound_Amiga.hpp
+@@ -61,7 +61,7 @@ public:
+ 	void				audioBufferFill( short *pBuffer, int pBufferSize );
+ 
+ 	int16				Track_Load( sSound* pSound, int16 pTrack );
+-	void				Sound_Play( int16 pTileset, int16 pSoundEffect, int16 pVolume );
++	void				Sound_Play( int16 pTileset, int16 pSoundEffect, int16 pVolume, int16 pIndex);
+ 
+ 	void				Music_Play( int16 pTrack );
+     void				Music_Stop();
+diff --git a/Source/Fodder.cpp b/Source/Fodder.cpp
+index 09afa39..0e9b606 100644
+--- a/Source/Fodder.cpp
++++ b/Source/Fodder.cpp
+@@ -3528,13 +3528,13 @@ void cFodder::Sound_Play(sSprite* pSprite, int16 pSoundEffect, int16 pData8) {
+ 
+     //loc_14BD4
+     pData8 = mCameraX >> 16;
+-    pData8 += (getCameraWidth() / 2) - 8;
++    pData8 += getCameraWidth() / 2;
+ 
+     if (pSprite != INVALID_SPRITE_PTR)
+         pData8 -= pSprite->field_0;
+ 
+     int16 DataC = mCameraY >> 16;
+-    DataC += (getCameraHeight() - 8) / 2;
++    DataC += getCameraHeight() / 2;
+ 
+     if (pSprite != INVALID_SPRITE_PTR)
+         DataC -= pSprite->field_4;
+@@ -3551,7 +3551,7 @@ void cFodder::Sound_Play(sSprite* pSprite, int16 pSoundEffect, int16 pData8) {
+         return;
+ 
+     if (!mStartParams->mDisableSound)
+-        mSound->Sound_Play(mMapLoaded->getTileType(), pSoundEffect, Volume);
++        mSound->Sound_Play(mMapLoaded->getTileType(), pSoundEffect, Volume, d0);
+ }
+ 
+ void cFodder::Mission_Intro_Helicopter_Start() {
+@@ -18586,25 +18586,54 @@ int16 cFodder::Mission_Loop() {
+ 
+ 		intro_main();
+ 
+-        // Prepare a new game?
+-        if (mGame_Data.mMission_Recruitment && !mParams->mSkipRecruit) {
+-            mGame_Data.mMission_Recruitment = 0;
+-
+-            switch (Recruit_Show()) {
+-            case 0:     // Start Mission
+-                break;
++        // Single / Random Map mode
++        if (mCustom_Mode == eCustomMode_Map) {
++            if (mVersionDefault->mName == "Random Map") {
++                sMapParams Params(mRandom.get());
++                CreateRandom(Params);
++                mGame_Data.mMission_Recruitment = 0;
++            }
++            else {
++                Custom_ShowMapSelection();
++            }
+ 
+-            case -1:    // Return to version select
++            if (mCustom_Mode == eCustomMode_None)
+                 return -1;
++        }
++        else {
++            // Prepare a new game?
++            if (mGame_Data.mMission_Recruitment && !mParams->mSkipRecruit) {
++                mGame_Data.mMission_Recruitment = 0;
+ 
+-            case -2:    // Custom set mode
+-                return -2;
++                switch (Recruit_Show()) {
++                case 0:     // Start Mission
++                    break;
+ 
+-            case -3:    // Load/Save pressed
+-                continue;
++                case -1:    // Return to version select
++                    return -1;
++
++                case -2:    // Custom set mode
++                    return -2;
++
++                case -3:    // Load/Save pressed
++                    continue;
++                }
+             }
+         }
+ 
++        GameData_Backup();
++
++        // Retail or Custom Mode
++        if (mVersionCurrent->isRetail() ||
++            mCustom_Mode != eCustomMode_None) {
++            Map_Load();
++
++            // Show the intro for the briefing screen
++            Mission_Intro_Play(false, mMapLoaded->getTileType());
++        }
++
++        mGraphics->Load_pStuff();
++
+         WindowTitleSet(true);
+ 
+ 		switch (Briefing_Show()) {
+diff --git a/Source/PC/Sound_PC.cpp b/Source/PC/Sound_PC.cpp
+index e8e520d..5c10156 100644
+--- a/Source/PC/Sound_PC.cpp
++++ b/Source/PC/Sound_PC.cpp
+@@ -120,7 +120,7 @@ void cSound_PC::MixerChannelFinished( int32 pChannel ) {
+ 	}
+ }
+ 
+-void cSound_PC::Sound_Play( int16 pTileset, int16 pSoundEffect, int16 pVolume ) {
++void cSound_PC::Sound_Play( int16 pTileset, int16 pSoundEffect, int16 pVolume, int16 pIndex) {
+ 	sChunkPlaying Playing;
+ 	auto eax = word_42316[pTileset][pSoundEffect];
+ 	if (!eax || !eax->size() || mSound == false )
+diff --git a/Source/PC/Sound_PC.hpp b/Source/PC/Sound_PC.hpp
+index 0bf9566..a242e0b 100644
+--- a/Source/PC/Sound_PC.hpp
++++ b/Source/PC/Sound_PC.hpp
+@@ -43,7 +43,7 @@ class cSound_PC : public cSound {
+ 						cSound_PC();
+ 						~cSound_PC();
+ 
+-	void				Sound_Play( int16 pTileset, int16 pSoundEffect, int16 pVolume );
++	void				Sound_Play( int16 pTileset, int16 pSoundEffect, int16 pVolume, int16 pIndex);
+ 
+ 	void				Music_Play( int16 pTrack );
+ 	void				Music_PlayFile( const std::string& pFilename );
+diff --git a/Source/PC/Sound_PC2.cpp b/Source/PC/Sound_PC2.cpp
+index ca7041a..94af0ea 100644
+--- a/Source/PC/Sound_PC2.cpp
++++ b/Source/PC/Sound_PC2.cpp
+@@ -189,7 +189,7 @@ void cSound_PC2::MixerChannelFinished( int32 pChannel ) {
+     mMixerChunks.erase(end, mMixerChunks.end());
+ }
+ 
+-void cSound_PC2::Sound_Play( int16 pTileset, int16 pSoundEffect, int16 pVolume) {
++void cSound_PC2::Sound_Play( int16 pTileset, int16 pSoundEffect, int16 pVolume, int16 pIndex) {
+     Mix_Chunk* chunk = 0;
+ 
+     if (pSoundEffect >= 65)
+diff --git a/Source/PC/Sound_PC2.hpp b/Source/PC/Sound_PC2.hpp
+index 7da3773..5e5e23b 100644
+--- a/Source/PC/Sound_PC2.hpp
++++ b/Source/PC/Sound_PC2.hpp
+@@ -41,7 +41,7 @@ class cSound_PC2 : public cSound {
+ 						cSound_PC2();
+ 						~cSound_PC2();
+ 
+-	void				Sound_Play( int16 pBx, int16 pData4, int16 pData8 );
++	void				Sound_Play( int16 pBx, int16 pData4, int16 pData8, int16 pIndex);
+ 
+ 	void				Music_Play( int16 pTrack );
+ 	void				Music_PlayFile( const char* pFilename );
+diff --git a/Source/Recruits.cpp b/Source/Recruits.cpp
+index 315cc59..1fda592 100644
+--- a/Source/Recruits.cpp
++++ b/Source/Recruits.cpp
+@@ -1152,85 +1152,54 @@ const std::vector<sGravePosition> mGravePositions = {
+ 
+ int16 cFodder::Recruit_Show() {
+ 
+-    if (mCustom_Mode != eCustomMode_Map) {
+-        Map_Load();
+-        Map_Load_Sprites();
++    Map_Load();
++    Map_Load_Sprites();
+ 
+-        Phase_Soldiers_Count();
+-        mGame_Data.Soldier_Sort();
+-        Phase_Soldiers_Prepare(true);
+-        Phase_Soldiers_AttachToSprites();
+-
+-    }
+-    else {
+-        if (mVersionDefault->mName == "Random Map") {
+-			sMapParams Params(mRandom.get());
+-			CreateRandom(Params);
+-			mGame_Data.mMission_Recruitment = 0;
+-        }
+-        else {
+-            Custom_ShowMapSelection();
+-        }
+-
+-        if (mCustom_Mode == eCustomMode_None)
+-            return -1;
+-    }
++    Phase_Soldiers_Count();
++    mGame_Data.Soldier_Sort();
++    Phase_Soldiers_Prepare(true);
++    Phase_Soldiers_AttachToSprites();
+ 
+     WindowTitleSet(false);
+ 
+-    // Single Map does not have a recruit screen
+-    if (mCustom_Mode != eCustomMode_Map) {
+-
+-		if (!mStartParams->mDisableSound)
+-			mSound->Music_Play(0);
++	if (!mStartParams->mDisableSound)
++		mSound->Music_Play(0);
+ 
+-        // Retail / Custom set show the Recruitment Hill
+-        if (mVersionCurrent->isRetail() || mVersionCurrent->isPCFormat() || mVersionCurrent->isRandom() || mCustom_Mode == eCustomMode_Set) {
++    // Retail / Custom set show the Recruitment Hill
++    if (mVersionCurrent->isRetail() || mVersionCurrent->isPCFormat() || mVersionCurrent->isRandom() || mCustom_Mode == eCustomMode_Set) {
+ 
+-            // Recruit Screen
+-            if (Recruit_Loop())
+-                return -1;
++        // Recruit Screen
++        if (Recruit_Loop())
++            return -1;
+ 
+-            Recruit_CheckLoadSaveButtons();
++        Recruit_CheckLoadSaveButtons();
+ 
+-            // Did we just load/save a game?
+-            if (mRecruit_Button_Load_Pressed || mRecruit_Button_Save_Pressed) {
+-                mRecruit_Mission_Restarting = true;
+-                mGame_Data.mMission_Recruitment = -1;
+-                mPhase_Aborted = true;
+-                return -3;
+-            }
++        // Did we just load/save a game?
++        if (mRecruit_Button_Load_Pressed || mRecruit_Button_Save_Pressed) {
++            mRecruit_Mission_Restarting = true;
++            mGame_Data.mMission_Recruitment = -1;
++            mPhase_Aborted = true;
++            return -3;
+         }
+-        else {
++    }
++    else {
+ 
+-            // Amiga demos have a menu
+-            if (mVersionCurrent->mPlatform == ePlatform::Amiga) {
++        // Amiga demos have a menu
++        if (mVersionCurrent->mPlatform == ePlatform::Amiga) {
+ 
+-                // But not custom games
+-                if (mCustom_Mode == eCustomMode_None) {
++            // But not custom games
++            if (mCustom_Mode == eCustomMode_None) {
+ 
+-                    if (!mVersionCurrent->isAmigaTheOne()) {
+-                        if (Demo_Amiga_ShowMenu())
+-                            return -1;
+-                    }
++                if (!mVersionCurrent->isAmigaTheOne()) {
++                    if (Demo_Amiga_ShowMenu())
++                        return -1;
+                 }
+             }
+         }
+     }
+ 
+     mRecruit_Mission_Restarting = false;
+-    GameData_Backup();
+-
+-    // Retail or Custom Mode
+-    if (mVersionCurrent->isRetail() ||
+-        mCustom_Mode != eCustomMode_None) {
+-        Map_Load();
+-
+-        // Show the intro for the briefing screen
+-        Mission_Intro_Play( false, mMapLoaded->getTileType() );
+-    }
+-
+-    mGraphics->Load_pStuff();
++    
+ 
+     return 0;
+ }
+diff --git a/Source/Sound.hpp b/Source/Sound.hpp
+index 4894507..15b06c8 100644
+--- a/Source/Sound.hpp
++++ b/Source/Sound.hpp
+@@ -48,7 +48,7 @@ protected:
+ 						cSound();
+ 	virtual				~cSound() { };
+ 
+-	virtual void		Sound_Play( int16 pTileset, int16 pSoundEffect, int16 pVolume ) = 0;
++	virtual void		Sound_Play( int16 pTileset, int16 pSoundEffect, int16 pVolume, int16 pIndex ) = 0;
+ 	virtual void		Sound_Stop() { }
+ 
+ 	virtual void		Music_Play( int16 pTrack ) = 0;
+diff --git a/Source/Version.hpp b/Source/Version.hpp
+index 779c068..f24cc91 100644
+--- a/Source/Version.hpp
++++ b/Source/Version.hpp
+@@ -165,6 +165,10 @@ struct sVersion {
+ 		return mPlatform == ePlatform::PC;
+ 	}
+ 
++	bool isSingle() const {
++		return mName == "Single Map";
++	}
++
+ 	/**
+ 	 * Is this version a demo?
+ 	 *
+-- 
+2.25.1
+

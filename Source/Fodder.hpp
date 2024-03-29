@@ -182,6 +182,17 @@ public:
     int32           mMapTile_TargetX;
     int32           mMapTile_TargetY;
 
+    bool            mMapTile_Music_Play;
+    
+    int16           mMusicTrack_unk;
+    int16           mMusic_CurrentTrack;
+    int16           mMusic_TargetVolume;
+    int16           mMusic_SlowVolumeDecrease;
+    
+    int16           word_82176;
+    int16           word_82178;
+    int16           word_829F6;
+
     int16           mCamera_Panning_ToTarget;
     int32           mCamera_AccelerationX;
     int32           mCamera_AccelerationY;
@@ -360,6 +371,8 @@ public:
     sSprite*        mSquad_CurrentVehicles[3];
     sSprite*        mSquad_CurrentVehicle;
 
+    std::vector<sTileTrack> mMapTileTracks;
+
     bool           mSprite_HumanVehicles_Found;
     std::vector<sSprite*>        mSprites_HumanVehicles;
     int16           dword_3B24B;
@@ -393,6 +406,9 @@ public:
     int16           mIntro_PlayTextDuration;
     int16           mSoundEffectToPlay_Set;
     int16           mSoundEffectToPlay;
+
+    unsigned char   byte_81DF8[4];
+    unsigned char   byte_81DFC[6];
 
     int16           mSquad_EnteredVehicleTimer[3];
     sSprite*        mSprite_OpenCloseDoor_Ptr;
@@ -457,6 +473,8 @@ public:
     int16           mMouseSpriteNew;
     int16           mMouseSetToCursor;
     int16           mMouseDisabled;
+    int16           mInterruptTick;
+    int16           mPaletteLevel;
 
     uint16          mSquad_Grenade_SplitMode;
     uint16          mSquad_Rocket_SplitMode;
@@ -511,7 +529,8 @@ public:
     size_t          mDraw_Dest_SkipPixelsPerRow;
     uint16          mVideo_Draw_ColumnsMax;
 
-
+    int32           word_85BE4;
+    int32           word_85BE6;
     int16           word_428B6;
     int16           word_428B8;
     int16          word_428BA;
@@ -521,10 +540,10 @@ public:
     int16           mBriefing_Helicopter_Off1;
     int16           mBriefing_Helicopter_Off2;
     int16           mBriefing_Helicopter_Off3;
-    const int16*    mBriefing_Helicopter_Off4;
+    int16           mBriefing_Helicopter_Pos;
     uint16          mBriefing_ParaHeli_Frame;
     int16           mBriefing_Helicopter_Moving;
-    int16           word_428D8;
+    int16           mBriefing_Helicopter_NotDone;
 
     int16           mMouseButtonStatus;
     int16           mInputMouseX;
@@ -596,6 +615,10 @@ public:
     void            Map_Load_Sprites();
     void			Map_Load_Sprites_Count();
     void            Map_Load_Resources();
+    void            Map_Load_TileTracks();
+
+    void            Music_Check_MapTile_TrackChange();
+    void            Music_Fade_SwitchTrack();
 
     void			Map_Add_Structure(const sStructure& pStructure, int16 pTileX, int16 pTileY);
 
@@ -603,7 +626,12 @@ public:
     int16			Tile_FindType(const eTerrainFeature pType);
     std::vector<int16> Tile_FindType(const eTerrainFeature pType, const eTerrainFeature pType2);
 
-    void            Music_Play_Tileset();
+    void		    Music_Play(int16 pTrack, int16 pSong = -1);
+    void            Music_Play_Tileset(int16_t pSong = -1);
+    void            Music_setup_track_unk(int16_t d0, int16_t d1);
+    void            Music_Increase_Channel_Volume();
+    bool            Music_Decrease_Channel_Volume();
+    void            Music_SetFullVolume();
 
     // Mission Functions
     void            Phase_Soldiers_Count();
@@ -678,6 +706,7 @@ public:
     void            Sprites_Draw();
     void            Sprite_Map_Sound_Play(int16& pData0);
 
+    void            Sound_Tick();
     void            Sound_Play(sSprite* pSprite, int16 pSoundEffect, int16 pData8);
 
     // 14EAC
@@ -685,7 +714,7 @@ public:
     void            Mission_Intro_Helicopter_Start();
 	void            Mission_Intro_Draw_Mission_Name();
 
-    void            sub_1594F();
+    void            Briefing_Helicopter_Check();
 
     void            CopyProtection();
     void            CopyProtection_EncodeInput();

@@ -1,0 +1,163 @@
+From 5112cf6f6f5775b76517e706576e36b48e91e37c Mon Sep 17 00:00:00 2001
+From: Robert Crossfield <robcrossfield@gmail.com>
+Date: Thu, 14 Mar 2024 14:19:51 +1100
+Subject: [PATCH 32/50] Add sfx playback limiter
+
+---
+ Projects/VS2017/OpenFodder.vcxproj.user |  3 +--
+ Projects/VS2017/openfodder.ini          | 16 ++++++-----
+ Source/Fodder.cpp                       | 36 ++++++++++++++++++++++++-
+ Source/Fodder.hpp                       |  4 +++
+ 4 files changed, 49 insertions(+), 10 deletions(-)
+
+diff --git a/Projects/VS2017/OpenFodder.vcxproj.user b/Projects/VS2017/OpenFodder.vcxproj.user
+index f5635a3..e8b52fb 100644
+--- a/Projects/VS2017/OpenFodder.vcxproj.user
++++ b/Projects/VS2017/OpenFodder.vcxproj.user
+@@ -2,8 +2,7 @@
+ <Project ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
+-    <LocalDebuggerCommandArguments>
+-    </LocalDebuggerCommandArguments>
++    <LocalDebuggerCommandArguments>--mission 2 --phase 2</LocalDebuggerCommandArguments>
+   </PropertyGroup>
+   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
+diff --git a/Projects/VS2017/openfodder.ini b/Projects/VS2017/openfodder.ini
+index c90b9c8..62a40c4 100644
+--- a/Projects/VS2017/openfodder.ini
++++ b/Projects/VS2017/openfodder.ini
+@@ -3,15 +3,17 @@
+ ;
+ 
+ [openfodder]
+-window=true
++window=false
+ cheats=false
+ scale=auto
++mouse-locked=true
++integer = false
+ ;columns = 50
+ ;rows = 30
+ 
+ [paths]
+-path1=../../Run
+-;path2=d:/games/openfodder
++;path1=../../Run
++path2=d:/games/openfodder
+ 
+ [engine]
+ platform=amiga
+@@ -19,7 +21,7 @@ maxsprite=45
+ maxspawn=10
+ 
+ [skip]
+-intro=false
+-briefing=false
+-service=false
+-hill=false
+\ No newline at end of file
++intro=true
++briefing=true
++service=true
++hill=true
+\ No newline at end of file
+diff --git a/Source/Fodder.cpp b/Source/Fodder.cpp
+index 35c716a..09afa39 100644
+--- a/Source/Fodder.cpp
++++ b/Source/Fodder.cpp
+@@ -403,6 +403,7 @@ int16 cFodder::Phase_Cycle() {
+ 
+ 	//loc_10841
+ 	Sprite_Bullet_SetData();
++    Sound_Tick();
+ 	Squad_EnteredVehicle_TimerTick();
+ 	Squad_Set_CurrentVehicle();
+ 
+@@ -947,6 +948,9 @@ void cFodder::Phase_EngineReset() {
+     mIntro_PlayTextDuration = 0;
+     mSoundEffectToPlay_Set = 0;
+ 
++    memset(byte_81DF8, 0, sizeof(byte_81DF8));
++    memset(byte_81DFC, 0, sizeof(byte_81DFC));
++
+     for (uint16 x = 0; x < 3; ++x)
+         mSquad_EnteredVehicleTimer[x] = 0;
+ 	
+@@ -3487,11 +3491,41 @@ loc_14D66:;
+     mSoundEffectToPlay = mSoundEffectToPlay_Set;
+ }
+ 
++void cFodder::Sound_Tick() {
++    uint8_t* a4 = byte_81DFC;
++
++    for (int16 d3 = 3; d3 >= 0; --d3) {
++        if (a4[d3] != 0) {
++            a4[d3]--;
++        }
++    }
++
++}
+ void cFodder::Sound_Play(sSprite* pSprite, int16 pSoundEffect, int16 pData8) {
+ 
+     if (mSoundDisabled)
+         return;
+ 
++    static uint16 word_81DF6 = 0;
++
++    uint16_t d0 = word_81DF6 + 1;
++    d0 = (d0 & 3) | 2;
++    word_81DF6 = d0;
++
++    uint8_t* a4 = byte_81DFC;
++    uint8_t* a6 = byte_81DF8;
++
++    if (a6[d0] <= pData8) {
++        a6[d0] = pData8;
++    }
++    else {
++        if (a4[d0] != 0) {
++            return;
++        }
++        a6[d0] = pData8;
++    }
++    a4[d0] = 0x0C;
++
+     //loc_14BD4
+     pData8 = mCameraX >> 16;
+     pData8 += (getCameraWidth() / 2) - 8;
+@@ -4021,7 +4055,7 @@ void cFodder::Campaign_Select_File_Cycle(const char* pTitle, const char* pSubTit
+ 	mSurface->clearBuffer();
+ 	MapTiles_Draw();
+ 	Sprites_Draw();
+-
++    Sound_Tick();
+ 	Campaign_Select_DrawMenu(pTitle, pSubTitle);
+ 
+ 
+diff --git a/Source/Fodder.hpp b/Source/Fodder.hpp
+index 3911b4c..3029227 100644
+--- a/Source/Fodder.hpp
++++ b/Source/Fodder.hpp
+@@ -394,6 +394,9 @@ public:
+     int16           mSoundEffectToPlay_Set;
+     int16           mSoundEffectToPlay;
+ 
++    unsigned char   byte_81DF8[4];
++    unsigned char   byte_81DFC[6];
++
+     int16           mSquad_EnteredVehicleTimer[3];
+     sSprite*        mSprite_OpenCloseDoor_Ptr;
+     int16           mSprite_Civilian_GotHome;
+@@ -678,6 +681,7 @@ public:
+     void            Sprites_Draw();
+     void            Sprite_Map_Sound_Play(int16& pData0);
+ 
++    void            Sound_Tick();
+     void            Sound_Play(sSprite* pSprite, int16 pSoundEffect, int16 pData8);
+ 
+     // 14EAC
+-- 
+2.25.1
+

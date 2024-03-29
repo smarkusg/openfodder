@@ -49,6 +49,22 @@ const int16 mBriefing_Helicopter_Offsets[] =
     0x0170, 0x0064, 0x000A, 
     -1, -1, -1
 };
+/*
+const int16 mBriefing_Helicopter_Offsets_Amiga[] =
+{
+  0x0180, 0x0020, 0x0005,
+  0x01A0, 0x0020, 0x001E,
+  0x01C0, 0x0020, 0x0014,
+  0x01E0, 0x0010, 0x0014,
+  0x0000, 0x0008, 0x0014,
+  0x0080, 0x0008, 0x003C,
+  0x0100, 0x0008, 0x0014,
+  0x01A0, 0x0004, 0x002E,
+  0x0170, 0x0032, 0x0010,       // Originally this line is 0x170, 0x32, 0x46
+  0x0170, 0x0020, 0x0010,       //  and this one didnt exist
+
+  -1, -1, -1
+};*/
 
 const int16 mBriefing_Helicopter_Offsets_Amiga[] =
 {
@@ -60,9 +76,7 @@ const int16 mBriefing_Helicopter_Offsets_Amiga[] =
   0x0080, 0x0008, 0x003C, 
   0x0100, 0x0008, 0x0014, 
   0x01A0, 0x0004, 0x002E, 
-  0x0170, 0x0032, 0x0010,       // Originally this line is 0x170, 0x32, 0x46
-  0x0170, 0x0020, 0x0010,       //  and this one didnt exist
-
+  0x0170, 0x0032, 0x0046,
   -1, -1, -1
 };
 
@@ -179,7 +193,7 @@ cFodder::cFodder(std::shared_ptr<cWindow> pWindow) {
     mInput_LastKey = 0;
     mCustom_ExitMenu = 0;
 
-    word_428D8 = 0;
+    mBriefing_Helicopter_NotDone = 0;
     word_3A05F = 0;
     byte_44AC0 = 0;
     mSoundDisabled = false;
@@ -194,7 +208,12 @@ cFodder::cFodder(std::shared_ptr<cWindow> pWindow) {
     mBriefing_Helicopter_Off1 = 0;
     mBriefing_Helicopter_Off2 = 0;
     mBriefing_Helicopter_Off3 = 0;
-    mBriefing_Helicopter_Off4 = 0;
+
+    mBriefing_Helicopter_Moving = 0;
+    mBriefing_Helicopter_Pos = 0;
+
+    mInterruptTick = 0;
+
     mBriefing_ParaHeli_Frame = 0;
     mBriefing_Helicopter_Moving = 0;
     mTroop_InRange_Callpad = 0;
@@ -403,8 +422,10 @@ int16 cFodder::Phase_Cycle() {
 
 	//loc_10841
 	Sprite_Bullet_SetData();
+    Sound_Tick();
 	Squad_EnteredVehicle_TimerTick();
 	Squad_Set_CurrentVehicle();
+    Music_Check_MapTile_TrackChange();
 
 	// No squad is selected, so set count down timer
 	if (mSquad_Selected < 0 && !mSquad_Select_Timer)
@@ -446,6 +467,7 @@ void cFodder::Phase_Prepare() {
 	//seg000:05D1
 
 	Phase_Goals_Set();
+    Map_Load_TileTracks();
 
 	Sprite_Bullet_SetData();
 	Sprite_Handle_Loop();
@@ -504,6 +526,7 @@ int16 cFodder::Phase_Loop() {
 	//  1 = Phase Running
     for (result = 1; result == 1; result = Phase_Cycle()) {
 		
+        ++mInterruptTick;
 		Cycle_End();
     }
 
@@ -529,6 +552,8 @@ void cFodder::Game_Handle() {
         }
     }
 
+    Music_Increase_Channel_Volume();
+
     //loc_108AE
     if (mSquad_SwitchWeapon) {
         --mSquad_SwitchWeapon;
@@ -548,6 +573,11 @@ void cFodder::Game_Handle() {
         mPhase_Finished = true;
         return;
     }
+
+    if(!(mInterruptTick & 3))
+        Music_Fade_SwitchTrack();
+
+    //sub_A3B14
 
     if (!mSoundEffectToPlay)
         return;
@@ -947,6 +977,9 @@ void cFodder::Phase_EngineReset() {
     mIntro_PlayTextDuration = 0;
     mSoundEffectToPlay_Set = 0;
 
+    memset(byte_81DF8, 0, sizeof(byte_81DF8));
+    memset(byte_81DFC, 0, sizeof(byte_81DFC));
+
     for (uint16 x = 0; x < 3; ++x)
         mSquad_EnteredVehicleTimer[x] = 0;
 	
@@ -990,6 +1023,11 @@ void cFodder::Phase_EngineReset() {
     mMapTile_Row_CurrentScreen = 0;
 
     mTroop_InRange_Callpad = 0;
+    mMusicTrack_unk = 0;
+    mMusic_CurrentTrack = 0;
+    mMusic_TargetVolume = 0;
+    mMusic_SlowVolumeDecrease = 0;
+    word_829F6 = 0;
 }
 
 void cFodder::Phase_SquadPrepare() {
@@ -1776,6 +1814,184 @@ void cFodder::Map_Load() {
     Map_Load_Resources();
 }
 
+void cFodder::Map_Load_TileTracks() {
+    uint8* tilePtr = mMap->data() + 0x62;
+
+    uint16_t heightCount = 0, widthCount;
+
+    mMapTileTracks.clear();
+
+    while (heightCount < mMapLoaded->getHeight()) {
+        widthCount = 0;
+
+        while (widthCount < mMapLoaded->getWidth()) {
+            uint16_t tile = (readLE<uint16>(tilePtr) & 0xE000) >> 8;
+
+            if (tile != 0) {
+                mMapTileTracks.emplace_back( widthCount , heightCount, tile >> 5 );
+            }
+
+            tilePtr += 2;
+            widthCount++;
+        }
+
+        heightCount++;
+    }
+}
+
+
+void cFodder::Music_Check_MapTile_TrackChange() {
+    if (mPhase_Completed_Timer != 0 || mGame_Data.mGamePhase_Data.mIsComplete || !mMapTile_Music_Play)
+        return;
+
+    if (mSquad_Leader == INVALID_SPRITE_PTR || mSquad_Leader == 0)
+        return;
+
+    int16_t spriteX = mSquad_Leader->field_0 >> 4;
+    int16_t spriteY = mSquad_Leader->field_4 >> 4;
+
+    int16_t BestDistance = 0x10;
+    int16_t PlaySong = 0;
+
+    for (const auto& tile : mMapTileTracks) {
+        if (tile.X < 0)
+            break;
+
+        if (tile.Track > 4)
+            continue;
+
+        // Call to sub_A10F2
+        int16_t d0 = spriteX;
+        int16_t d1 = spriteY;
+        int16_t d2 = tile.X;
+        int16_t d3 = tile.Y;
+        int16_t d4 = 0x0F;
+        int16_t result = Map_Get_Distance_BetweenPoints(d0, d1, d2, d4, d3);
+
+        if (result < BestDistance) {
+            BestDistance = result;
+            PlaySong = tile.Track;
+        }
+    }
+
+
+    int16_t d0, d1;
+
+    if (BestDistance > 4) {
+        if (BestDistance >= 0xA) {
+            d0 = 1;
+            d1 = (BestDistance - 8) << 1;
+            d1 = d1 < 0x30 ? d1 : 0x30;
+        }
+        else {
+            d0 = PlaySong;
+            d1 = (BestDistance - 5) << 3;
+            d1 = 0x38 - d1;
+        }
+    }
+    else {
+        d0 = PlaySong;
+        d1 = 0x40;
+    }
+
+    Music_setup_track_unk(d0, d1);
+}
+
+void cFodder::Music_Fade_SwitchTrack() {
+    int16_t d0 = mMusicTrack_unk;
+
+    if (d0 == 0)
+        return;
+
+    int8_t d1 = mSound->Music_GetVolume(0);// byte_A4B5E[0x28];
+
+    // Changing track?
+    if (mMusic_CurrentTrack != d0) {
+        --d1;
+
+        // Once volume below 8, change to new song
+        if (d1 < 8) {
+            d1 = 8;
+            mMusic_CurrentTrack = d0;
+            Music_Play_Tileset(d0);
+        }
+    } else {
+
+        if (d1 < mMusic_TargetVolume) {
+            d1++;
+        } else {
+            d1 = mMusic_TargetVolume;
+            mMusicTrack_unk = 0;
+        }
+    }
+
+    //loc_878F4
+    // 
+    mSound->Music_SetVolume(-1, d1);
+    //byte_A4B5E[0x28] = d1;
+
+    if (word_829F6 == 0) {
+        //byte_A4B5E[0x29] = d1;
+    }
+}
+
+void cFodder::Music_setup_track_unk(int16_t d0, int16_t d1) {
+    if (mMusicTrack_unk != 0)
+        return;
+
+    if (mMusic_CurrentTrack != d0) {
+        mMusic_TargetVolume = d1;
+        mMusicTrack_unk = d0;
+    }
+    else {
+        //byte_A4B5E[0x28] = (uint8_t)d1;
+        mSound->Music_SetVolume(-1, d1);
+
+        if (word_829F6 == 0) {
+           // byte_A4B5E[0x29] = (uint8_t)d1;
+        }
+    }
+}
+
+void cFodder::Music_Increase_Channel_Volume() {
+
+    if (word_82176) {
+        int16 d0 = mInterruptTick & 3;
+        if (!d0) {
+            for (int i = 0; i < 4; ++i) {
+                int16 v = mSound->Music_GetVolume(i);
+                if (v < 0x40) {
+                    mSound->Music_SetVolume(i, ++v);
+                }
+            }
+        }
+    }
+
+    if (word_82178) {
+        Music_Decrease_Channel_Volume();
+    }
+
+    if (mMusic_SlowVolumeDecrease) {
+        int16 d0 = mInterruptTick & 0x3F;
+        if (!d0) {
+            Music_Decrease_Channel_Volume();
+        }
+    }
+}
+
+bool cFodder::Music_Decrease_Channel_Volume() {
+    bool ret = false;
+
+    for (int i = 0; i < 4; ++i) {
+        int16 v = mSound->Music_GetVolume(i);
+        if (v > 0) {
+            ret = true;
+            mSound->Music_SetVolume(i, --v);
+        }
+    }
+    return ret;
+}
+
 /**
  * Load the Base and Sub Tile BLK Files
  *
@@ -1879,9 +2095,30 @@ void cFodder::Map_Load_Resources() {
     mGraphics->PaletteSet();
 }
 
-void cFodder::Music_Play_Tileset() {
-    if (!mStartParams->mDisableSound)
-        mSound->Music_Play(mMapLoaded->getTileType() + 0x32);
+void cFodder::Music_Play(int16 pTrack, int16 pSong) {
+
+    word_82176 = -1;
+    word_82178 = 0;
+
+    mSound->Music_Play(pTrack, pSong);
+    mSound->Music_SetVolume(-1, 0);
+}
+
+void cFodder::Music_SetFullVolume() {
+    for (int i = 0; i < 4; ++i) {
+        mSound->Music_SetVolume(i, 0x40);
+    }
+}
+
+void cFodder::Music_Play_Tileset(int16_t pSong) {
+    mMapTile_Music_Play = true;
+
+    if (!mStartParams->mDisableSound) {
+        if (pSong == -1)
+            pSong = 2;
+
+        Music_Play(mMapLoaded->getTileType() + 0x32, pSong);
+    }
 }
 
 void cFodder::Camera_Pan_To_Target() {
@@ -2363,7 +2600,8 @@ void cFodder::Phase_TextSprite_Create_Mission(sSprite* pData2C) {
     pData2C->field_8 = 0xA2;
     pData2C->field_18 = eSprite_Text_Mission;
     if (!mStartParams->mDisableSound)
-        mSound->Music_Play(6);
+        Music_Play(6);
+    Music_SetFullVolume();
 }
 
 void cFodder::Phase_TextSprite_Create_Phase(sSprite* pData2C) {
@@ -2375,7 +2613,9 @@ void cFodder::Phase_TextSprite_Create_Phase(sSprite* pData2C) {
     pData2C->field_18 = eSprite_Text_Phase;
     
     if (!mStartParams->mDisableSound)
-        mSound->Music_Play(0x0C);
+        Music_Play(0x0C);
+
+    Music_SetFullVolume();
 }
 
 void cFodder::Phase_TextSprite_Create_Complete(sSprite* pData2C) {
@@ -2408,7 +2648,8 @@ void cFodder::Phase_Show_TryAgain() {
     Phase_TextSprite_Create_Again(&mSprites[42]);
 
     if (!mStartParams->mDisableSound)
-        mSound->Music_Play(0x0F);
+        Music_Play(0x0F);
+    Music_SetFullVolume();
 }
 
 void cFodder::Phase_TextSprite_Create_Try(sSprite* pData2C) {
@@ -3161,7 +3402,7 @@ void cFodder::VersionSwitch(const sGameVersion* pVersion) {
         }
 
         if (!mStartParams->mDisableSound)
-            mSound->Music_Play(0);
+            Music_Play(0);
     }
 
 }
@@ -3403,7 +3644,7 @@ void cFodder::Phase_TextSprite_Create_GameOver(sSprite* pData2C) {
     pData2C->field_18 = eSprite_Text_GameOver;
     
     if (!mStartParams->mDisableSound)
-        mSound->Music_Play(8);
+        Music_Play(8);
 }
 
 void cFodder::Mouse_DrawCursor() {
@@ -3490,20 +3731,50 @@ loc_14D66:;
     mSoundEffectToPlay = mSoundEffectToPlay_Set;
 }
 
+void cFodder::Sound_Tick() {
+    uint8_t* a4 = byte_81DFC;
+
+    for (int16 d3 = 3; d3 >= 0; --d3) {
+        if (a4[d3] != 0) {
+            a4[d3]--;
+        }
+    }
+
+}
 void cFodder::Sound_Play(sSprite* pSprite, int16 pSoundEffect, int16 pData8) {
 
     if (mSoundDisabled)
         return;
 
+    static uint16 word_81DF6 = 0;
+
+    uint16_t d0 = word_81DF6 + 1;
+    d0 = (d0 & 3) | 2;
+    word_81DF6 = d0;
+
+    uint8_t* a4 = byte_81DFC;
+    uint8_t* a6 = byte_81DF8;
+
+    if (a6[d0] <= pData8) {
+        a6[d0] = pData8;
+    }
+    else {
+        if (a4[d0] != 0) {
+            return;
+        }
+        a6[d0] = pData8;
+    }
+    a4[d0] = 0x0C;
+
     //loc_14BD4
     pData8 = mCameraX >> 16;
-    pData8 += (getCameraWidth() / 2) - 8;
+    pData8 += getCameraWidth() / 2;
 
     if (pSprite != INVALID_SPRITE_PTR)
         pData8 -= pSprite->field_0;
 
     int16 DataC = mCameraY >> 16;
-    DataC += (getCameraHeight() - 8) / 2;
+    DataC += getCameraHeight() / 2;
 
     if (pSprite != INVALID_SPRITE_PTR)
         DataC -= pSprite->field_4;
@@ -3520,38 +3791,51 @@ void cFodder::Sound_Play(sSprite* pSprite, int16 pSoundEffect, int16 pData8) {
         return;
 
     if (!mStartParams->mDisableSound)
-        mSound->Sound_Play(mMapLoaded->getTileType(), pSoundEffect, Volume);
+        mSound->Sound_Play(mMapLoaded->getTileType(), pSoundEffect, Volume, d0);
 }
 
 void cFodder::Mission_Intro_Helicopter_Start() {
     mHelicopterPosX = 0x01500000;
-   // if (mVersionCurrent->isPC())
-    //    mHelicopterPosY = 0x00260000;
-   // else
-        mHelicopterPosY = 0x001E0000;
+    mHelicopterPosY = 0x001E0000;
 
-    /*if (mVersionCurrent->isPC()) {
-        mBriefing_Helicopter_Off1 = mBriefing_Helicopter_Offsets[0];
-        mBriefing_Helicopter_Off2 = mBriefing_Helicopter_Offsets[1];
-        mBriefing_Helicopter_Off3 = mBriefing_Helicopter_Offsets[2];
-        mBriefing_Helicopter_Off4 = &mBriefing_Helicopter_Offsets[3];
-    }
-    else {*/
-        mBriefing_Helicopter_Off1 = mBriefing_Helicopter_Offsets_Amiga[0];
-        mBriefing_Helicopter_Off2 = mBriefing_Helicopter_Offsets_Amiga[1];
-        mBriefing_Helicopter_Off3 = mBriefing_Helicopter_Offsets_Amiga[2];
-        mBriefing_Helicopter_Off4 = &mBriefing_Helicopter_Offsets_Amiga[3];
-    //}
+    word_428B8 = 0;
+    mPaletteLevel = 0;
+    word_85BE4 = 0xD0;
 
+    mBriefing_Helicopter_Moving = 0;
+    mBriefing_Helicopter_Pos = 0;
+    mBriefing_Helicopter_Off3 = 0;
+
+    Briefing_Update_Helicopter();
     mBriefing_ParaHeli_Frame = 0;
     mBriefing_Helicopter_Moving = -1;
-    word_428D8 = -1;
-    sub_1594F();
+    mBriefing_Helicopter_NotDone = -1;
+
+    //Briefing_Helicopter_Check();
+    word_428B6 = 0x180;
     mBriefing_Helicopter_Off1 = 0x180;
 
 }
 
 void cFodder::Briefing_Update_Helicopter() {
+
+    word_85BE4 = (mHelicopterPosX >> 16) - 0x20;
+    word_85BE6 = (mHelicopterPosY >> 16);
+
+    mBriefing_Helicopter_Off3--;
+
+    if (mBriefing_Helicopter_Off3 < 0) {
+
+        mBriefing_Helicopter_Off1 = mBriefing_Helicopter_Offsets_Amiga[mBriefing_Helicopter_Pos];
+        mBriefing_Helicopter_Off2 = mBriefing_Helicopter_Offsets_Amiga[mBriefing_Helicopter_Pos + 1];
+        mBriefing_Helicopter_Off3 = mBriefing_Helicopter_Offsets_Amiga[mBriefing_Helicopter_Pos + 2];
+
+        if (mBriefing_Helicopter_Off3 < 0)
+            return;
+        
+        mBriefing_Helicopter_Pos += 3; 
+    }
+
     word_428B6 &= 0x1FE;
     uint16 bx = word_428B6;
 
@@ -3580,7 +3864,7 @@ void cFodder::Briefing_Update_Helicopter() {
     word_428B6 &= 0x1FE;
 
     if (mBriefing_Helicopter_Off2 != word_428B8) {
-        if (word_428B8 >= mBriefing_Helicopter_Off2)
+        if (word_428B8 > mBriefing_Helicopter_Off2)
             word_428B8 -= 1;
         else
             word_428B8 += 1;
@@ -3591,30 +3875,51 @@ void cFodder::Briefing_Update_Helicopter() {
 
     if (mBriefing_ParaHeli_Frame == 4)
         mBriefing_ParaHeli_Frame = 0;
-
-    --word_428BA;
-    if (word_428BA <= 0)
-        sub_1594F();
-
 }
 
-void cFodder::sub_1594F() {
+void cFodder::Briefing_Helicopter_Check() {
+    uint16_t d0;
 
-    word_428B6 = mBriefing_Helicopter_Off1;
-    word_428B8 = mBriefing_Helicopter_Off2;
-    word_428BA = mBriefing_Helicopter_Off3;
-    mBriefing_Helicopter_Off1 = *mBriefing_Helicopter_Off4++;
-    mBriefing_Helicopter_Off2 = *mBriefing_Helicopter_Off4++;
-    mBriefing_Helicopter_Off3 = *mBriefing_Helicopter_Off4++;
+    Music_Increase_Channel_Volume();
+    if (!mMouse_Exit_Loop || !mPhase_Aborted) {
 
-    if (word_428B6 == -1) {
-        mBriefing_Helicopter_Moving = 0;
-        word_428D8 = 0;
+        if (word_85BE4 > 0x30) {
 
-        mGraphics->mImageMissionIntro.CopyPalette(mGraphics->mPalette, 0x100, 0);
-        mSurface->paletteNew_SetToBlack();
+            d0 = mInterruptTick & 0x1;
+
+            if (d0 == 0) {
+
+                if (mBriefing_Helicopter_Moving < 0x10) {
+                    mBriefing_Helicopter_Moving++;
+                    mPaletteLevel++;
+                    return;
+                }
+            }
+
+            if (mBriefing_Helicopter_Moving >= 0x10) {
+                Briefing_Update_Helicopter();
+            }
+            return;
+        }
     }
 
+    d0 = mInterruptTick & 0x1;
+
+    if (d0 == 0) {
+        if (mBriefing_Helicopter_Moving == 0 && mBriefing_Helicopter_NotDone) {
+            mBriefing_Helicopter_NotDone = 0;
+
+            mGraphics->mImageMissionIntro.CopyPalette(mGraphics->mPalette, 0x100, 0);
+            //mSurface->paletteNew_SetToBlack();
+        }
+        else {
+            mBriefing_Helicopter_Moving--;
+            mPaletteLevel--;
+            mSurface->paletteNew_SetToBlack();
+        }
+    }
+
+    Briefing_Update_Helicopter();
 }
 
 void cFodder::Mission_Intro_Draw_OpenFodder() {
@@ -3799,6 +4104,8 @@ void cFodder::Campaign_Select_Setup() {
 	}
 
 	Campaign_Select_Sprite_Prepare();
+    Music_Play(mMapLoaded->getTileType() + 0x32, 4);
+    mSound->Music_SetVolume(-1, 0x10);
 
 	if (mGUI_SaveLoadAction != 3) {
 		mSurface->palette_FadeTowardNew();
@@ -4007,11 +4314,13 @@ void cFodder::Campaign_Select_Sprite_Prepare() {
 
     word_3AA1D = word_3BED5[0];
 
+    mSoundDisabled = true;
     if(mMapLoaded->getTileType() == eTileTypes_Jungle)
         Map_Add_Structure(mStructuresBarracksWithSoldier[mMapLoaded->getTileType()], 4, 2);
 
     if(mMapLoaded->getTileType() == eTileTypes_AFX)
         Map_Add_Structure(mStructuresBarracksWithSoldier[mMapLoaded->getTileType()], 2, 5);
+    mSoundDisabled = false;
 }
 
 void cFodder::Campaign_Select_File_Cycle(const char* pTitle, const char* pSubTitle) {
@@ -4024,7 +4333,7 @@ void cFodder::Campaign_Select_File_Cycle(const char* pTitle, const char* pSubTit
 	mSurface->clearBuffer();
 	MapTiles_Draw();
 	Sprites_Draw();
-
+    Sound_Tick();
 	Campaign_Select_DrawMenu(pTitle, pSubTitle);
 
 
@@ -9318,6 +9627,8 @@ void cFodder::Service_Show() {
     if (mParams->mSkipService)
         return;
 
+    word_82176 = 0;
+
 	mWindow->SetScreenSize(mVersionCurrent->GetScreenSize());
     mVersionPlatformSwitchDisabled = true;
 
@@ -9327,7 +9638,7 @@ void cFodder::Service_Show() {
     mGraphics->SetActiveSpriteSheet(eGFX_SERVICE);
     mGraphics->PaletteSet();
 
-    mSound->Music_Play(0);
+    Music_Play(0);
     Service_KIA_Loop();
 
     if(!mVersionCurrent->isAmigaTheOne())
@@ -9411,7 +9722,8 @@ void cFodder::Service_Promotion_Loop() {
     mSurface->Save();
 
     do {
-
+        ++mInterruptTick;
+        Music_Increase_Channel_Volume();
         Mouse_Inputs_Get();
         if (mService_Promotion_Exit_Loop == -1 || mMouse_Exit_Loop) {
             mMouse_Exit_Loop = false;
@@ -9771,6 +10083,9 @@ void cFodder::Briefing_Show_Ready() {
     mMouse_Exit_Loop = false;
 
     do {
+        ++mInterruptTick;
+
+        Music_Increase_Channel_Volume();
         Mouse_Inputs_Get();
 
         if (mPhase_Aborted) {
@@ -16092,6 +16407,10 @@ void cFodder::Intro_OpenFodder() {
 		mOpenFodder_Intro_Done = true;
 		if (CF2)
 			VersionSwitch(mVersions->GetForCampaign("Cannon Fodder", mParams->mDefaultPlatform));
+
+        while (Music_Decrease_Channel_Volume()) {
+            sleepLoop(1);
+        }
 	}
 }
 
@@ -16221,7 +16540,7 @@ void cFodder::Mission_Intro_Play(const bool pShowHelicopter, eTileTypes pTileset
     mGraphics->SetActiveSpriteSheet(eGFX_BRIEFING);
 
     mMouse_Exit_Loop = false;
-    mSound->Music_Play(0x07);
+    Music_Play(0x07);
     Mission_Intro_Helicopter_Start();
 
     Mission_Intro_Draw_Mission_Name();
@@ -16299,7 +16618,8 @@ void cFodder::intro_Retail() {
     CopyProtection();
     mGraphics->Load_Sprite_Font();
 
-	mSound->Music_Play(CANNON_BASED(16, 20));
+	Music_Play(CANNON_BASED(16, 20));
+    Music_SetFullVolume();
 
     if (mVersionCurrent->isCannonFodder1())
         intro_LegionMessage();
@@ -16312,8 +16632,14 @@ void cFodder::intro_Retail() {
     if (ShowImage_ForDuration("cftitle", CANNON_BASED(0x1F8 / 3, 0x280 / 3)))
         return;
 
-    if (intro_Play())
+    if (intro_Play()) {
+
+        while (Music_Decrease_Channel_Volume()) {
+            sleepLoop(1);
+        }
+
         return;
+    }
 
     if (ShowImage_ForDuration("virgpres", 0x2D0 / 3))
         return;
@@ -16438,7 +16764,7 @@ void cFodder::WonGame() {
        // mGraphics->Load_And_Draw_Image("PRETENTIOUS2", 0x100);
         mGraphics->Load_And_Draw_Image("PRETENTIOUS3", 0x100);
     } else {
-        mSound->Music_Play(17);
+        Music_Play(17);
         mGraphics->Load_And_Draw_Image("WON", 0x100);
     }
 
@@ -18537,7 +18863,7 @@ int16 cFodder::Briefing_Show() {
 			mPhase_Aborted = true;
 
 			if (!mStartParams->mDisableSound)
-				mSound->Music_Play(0);
+				Music_Play(0);
 
 			return 0;
 		}
@@ -18562,24 +18888,54 @@ int16 cFodder::Mission_Loop() {
 
 		intro_main();
 
-        // Prepare a new game?
-        if (mGame_Data.mMission_Recruitment && !mParams->mSkipRecruit) {
-            mGame_Data.mMission_Recruitment = 0;
+        // Single / Random Map mode
+        if (mCustom_Mode == eCustomMode_Map) {
+            if (mVersionDefault->mName == "Random Map") {
+                sMapParams Params(mRandom.get());
+                CreateRandom(Params);
+                mGame_Data.mMission_Recruitment = 0;
+            }
+            else {
+                Custom_ShowMapSelection();
+            }
 
-            switch (Recruit_Show()) {
-            case 0:     // Start Mission
-                break;
-
-            case -1:    // Return to version select
+            if (mCustom_Mode == eCustomMode_None)
                 return -1;
+        }
+        else {
+            // Prepare a new game?
+            if (mGame_Data.mMission_Recruitment && !mParams->mSkipRecruit) {
+                mGame_Data.mMission_Recruitment = 0;
 
-            case -2:    // Custom set mode
-                return -2;
+                switch (Recruit_Show()) {
+                case 0:     // Start Mission
+                    break;
 
-            case -3:    // Load/Save pressed
-                continue;
+                case -1:    // Return to version select
+                    return -1;
+
+                case -2:    // Custom set mode
+                    return -2;
+
+                case -3:    // Load/Save pressed
+                    continue;
+                }
             }
         }
+
+        GameData_Backup();
+        mMusic_SlowVolumeDecrease = true;
+
+        // Retail or Custom Mode
+        if (mVersionCurrent->isRetail() ||
+            mCustom_Mode != eCustomMode_None) {
+            Map_Load();
+
+            // Show the intro for the briefing screen
+            Mission_Intro_Play(false, mMapLoaded->getTileType());
+        }
+
+        mGraphics->Load_pStuff();
 
         WindowTitleSet(true);
 
@@ -18595,7 +18951,11 @@ int16 cFodder::Mission_Loop() {
 				break;
 		}
 
+        while (Music_Decrease_Channel_Volume()) {
+            sleepLoop(1);
+        }
 		Phase_Prepare();
+        mMusic_SlowVolumeDecrease = false;
 
         if (!Phase_Loop()) {
             mKeyCode = 0;

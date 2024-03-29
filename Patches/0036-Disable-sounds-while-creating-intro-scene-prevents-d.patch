@@ -1,0 +1,40 @@
+From bfc4994b12ccdb99e5c1ff0a86f28e5473073c94 Mon Sep 17 00:00:00 2001
+From: Robert Crossfield <robcrossfield@gmail.com>
+Date: Sat, 16 Mar 2024 18:22:24 +1100
+Subject: [PATCH 36/50] Disable sounds while creating intro scene, prevents
+ door slam on startup. Play running water "music"
+
+---
+ Source/Fodder.cpp | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/Source/Fodder.cpp b/Source/Fodder.cpp
+index 7374827..119bc5e 100644
+--- a/Source/Fodder.cpp
++++ b/Source/Fodder.cpp
+@@ -3985,6 +3985,8 @@ void cFodder::Campaign_Select_Setup() {
+ 	}
+ 
+ 	Campaign_Select_Sprite_Prepare();
++    mSound->Music_Play(mMapLoaded->getTileType() + 0x32, 4);
++    mSound->Music_SetVolume(0, 0x10);
+ 
+ 	if (mGUI_SaveLoadAction != 3) {
+ 		mSurface->palette_FadeTowardNew();
+@@ -4193,11 +4195,13 @@ void cFodder::Campaign_Select_Sprite_Prepare() {
+ 
+     word_3AA1D = word_3BED5[0];
+ 
++    mSoundDisabled = true;
+     if(mMapLoaded->getTileType() == eTileTypes_Jungle)
+         Map_Add_Structure(mStructuresBarracksWithSoldier[mMapLoaded->getTileType()], 4, 2);
+ 
+     if(mMapLoaded->getTileType() == eTileTypes_AFX)
+         Map_Add_Structure(mStructuresBarracksWithSoldier[mMapLoaded->getTileType()], 2, 5);
++    mSoundDisabled = false;
+ }
+ 
+ void cFodder::Campaign_Select_File_Cycle(const char* pTitle, const char* pSubTitle) {
+-- 
+2.25.1
+
