@@ -1,0 +1,131 @@
+From 309c070f1967f756626f657b6982fb64c5bb1436 Mon Sep 17 00:00:00 2001
+From: vanfanel <redwindwanderer@gmail.com>
+Date: Tue, 12 Mar 2024 21:32:00 +0100
+Subject: [PATCH 29/50] Add non-integer scaling option.
+
+---
+ Source/Parameters.cpp  | 11 +++++++++++
+ Source/Parameters.hpp  |  2 ++
+ Source/Window.cpp      | 18 +++++++++++++++---
+ openfodder.ini.example |  6 ++++++
+ 4 files changed, 34 insertions(+), 3 deletions(-)
+
+diff --git a/Source/Parameters.cpp b/Source/Parameters.cpp
+index 1d082a7..3f18015 100644
+--- a/Source/Parameters.cpp
++++ b/Source/Parameters.cpp
+@@ -42,6 +42,7 @@ std::string sFodderParameters::ToJson() {
+ 	Save["mSkipService"] = mSkipService;
+ 
+ 	Save["mWindowMode"] = mWindowMode;
++	Save["mIntegerScaling"] = mIntegerScaling;
+ 	Save["mRandom"] = mRandom;
+ 	Save["mDefaultPlatform"] = mDefaultPlatform;
+ 	Save["mCampaignName"] = mCampaignName;
+@@ -75,6 +76,7 @@ bool sFodderParameters::FromJson(const std::string& pJson) {
+ 	mMissionNumber = LoadedData["mMissionNumber"];
+ 	mPhaseNumber = LoadedData["mPhaseNumber"];
+ 	mWindowMode = LoadedData["mWindowMode"];
++	mIntegerScaling = LoadedData["mIntegerScaling"];
+ 	mRandom = LoadedData["mRandom"];
+ 	mDefaultPlatform = LoadedData["mDefaultPlatform"];
+ 	mCampaignName = LoadedData["mCampaignName"];
+@@ -255,6 +257,9 @@ bool sFodderParameters::ProcessCLI(int argc, char *argv[]) {
+ 		if(result.count("window-scale"))
+ 			mWindowScale = result["window-scale"].as<uint32>();
+ 
++		if (result.count("integer-scaling"))
++			mIntegerScaling = result["integer"].as<bool>();
++
+ 		mRandom = result["random"].as<bool>();
+ 		if (result["random-save"].count()) {
+ 
+@@ -366,6 +371,12 @@ bool sFodderParameters::ProcessINI() {
+ 				mWindowScale = ini.get("scale", 0);
+ 			}
+ 
++			if (ini.get("integer", "true") == "true")
++				mIntegerScaling = true;
++			else {
++				mIntegerScaling = false;
++			}
++
+ 			if (ini.get("columns", "0") == "0")
+ 				mWindowColumns = 0;
+ 			else {
+diff --git a/Source/Parameters.hpp b/Source/Parameters.hpp
+index 35f0094..2ff9797 100644
+--- a/Source/Parameters.hpp
++++ b/Source/Parameters.hpp
+@@ -39,6 +39,7 @@ public:
+ 	bool mMouseLocked;			// Mouse is locked to window
+ 
+ 	bool mWindowMode;           // Start in a window
++	bool mIntegerScaling;           // Use integer scaling in fullscreen mode
+ 	size_t mWindowScale;		// Start with window scaled at
+ 	size_t mWindowRows;
+ 	size_t mWindowColumns;
+@@ -110,6 +111,7 @@ public:
+ 		mMouseLocked = false;
+ 
+ 		mWindowMode = false;
++		mIntegerScaling = true;
+ 		mWindowScale = 0;
+ 
+ 		mWindowRows = 0;
+diff --git a/Source/Window.cpp b/Source/Window.cpp
+index de79fc6..d1da885 100644
+--- a/Source/Window.cpp
++++ b/Source/Window.cpp
+@@ -74,7 +74,13 @@ bool cWindow::InitWindow( const std::string& pWindowTitle ) {
+ 		return false;
+ 	}
+ 
+-	SDL_SetHint( SDL_HINT_RENDER_SCALE_QUALITY, 0 );
++    if (g_Fodder->mParams->mIntegerScaling || mWindowMode) {
++	SDL_SetHint( SDL_HINT_RENDER_SCALE_QUALITY, "nearest" );
++    }
++    else {
++	SDL_SetHint( SDL_HINT_RENDER_SCALE_QUALITY, "linear" );
++    }
++
+ 	SDL_SetHintWithPriority(SDL_HINT_MOUSE_RELATIVE_MODE_WARP, "1", SDL_HINT_OVERRIDE);
+ 
+ 	SetCursor();
+@@ -348,8 +354,14 @@ void cWindow::RenderAt( cSurface* pImage ) {
+ 	Src.x = (int) 16;
+ 	Src.y = (int) 16;
+ 
+-	Dest.w = GetWindowSize().mWidth;
+-	Dest.h = GetWindowSize().mHeight;
++	if (g_Fodder->mParams->mIntegerScaling || mWindowMode) {
++		Dest.w = GetWindowSize().mWidth;
++		Dest.h = GetWindowSize().mHeight;
++	}
++	else {
++		SDL_GetWindowSize(mWindow, NULL, &Dest.h);
++		Dest.w = Dest.h*(float)(4.0/3.0);
++	}
+ 
+ 	if (mWindowMode) {
+ 		Dest.x = 0;
+diff --git a/openfodder.ini.example b/openfodder.ini.example
+index 9c8404a..c4cfdb3 100644
+--- a/openfodder.ini.example
++++ b/openfodder.ini.example
+@@ -16,6 +16,12 @@ cheats=false
+ ; values such as 1, 2 or 3+ are multiples of the original resolution
+ scale=auto
+ 
++; Use integer scaling (default), or use non-integer scaling to fit the image to display height
++; while preserving the original 4:3 aspect ratio.
++; When doing non-integer scaling in fullscreen mode, linear filtering is applied
++; to avoid ugly irregular pixels and shimmering artifacts. 
++integer=true
++
+ ; Number of map tiles to draw horizontally (0 for platform default)
+ columns=0
+ 
+-- 
+2.25.1
+

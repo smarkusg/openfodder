@@ -1,0 +1,94 @@
+From 5e09a16c44c4df943a41e97bffd17d7fe39c0526 Mon Sep 17 00:00:00 2001
+From: Robert Crossfield <robcrossfield@gmail.com>
+Date: Wed, 13 Mar 2024 08:54:10 +1100
+Subject: [PATCH 30/50] Add CLI command help, Check for integer scaling
+ variable while loading saved parameters (maintain compatibility)
+
+---
+ README.md             | 1 +
+ Source/GameData.cpp   | 2 +-
+ Source/Parameters.cpp | 8 ++++++--
+ Source/Parameters.hpp | 2 +-
+ 4 files changed, 9 insertions(+), 4 deletions(-)
+
+diff --git a/README.md b/README.md
+index d036df3..619f496 100644
+--- a/README.md
++++ b/README.md
+@@ -73,6 +73,7 @@ Open Fodder supports six demos from the Amiga platform, and three retail release
+       --rows 16                 Number of camera rows (default: 16)
+   -w, --window                  Start in window mode
+       --window-scale arg        Set the window scale (default: 0)
++      --integer-scaling         Set integer scaling (default: true)
+       --cheats                  Enable cheat keys
+ 
+       --max-sprite 45           Set the maximum sprites (default: 45)
+diff --git a/Source/GameData.cpp b/Source/GameData.cpp
+index 072d227..1ee6065 100644
+--- a/Source/GameData.cpp
++++ b/Source/GameData.cpp
+@@ -288,7 +288,7 @@ bool sGameRecorded::FromJson(const std::string& pJson) {
+             }
+         }
+         catch (std::exception Exception) {
+-            std::cout << "V1 Elements not found: " << Exception.what() << "\n";
++            std::cout << "sGameRecorded: V1 Elements not found: " << Exception.what() << "\n";
+             return false;
+         }
+     }
+diff --git a/Source/Parameters.cpp b/Source/Parameters.cpp
+index 3f18015..e0099d2 100644
+--- a/Source/Parameters.cpp
++++ b/Source/Parameters.cpp
+@@ -76,7 +76,6 @@ bool sFodderParameters::FromJson(const std::string& pJson) {
+ 	mMissionNumber = LoadedData["mMissionNumber"];
+ 	mPhaseNumber = LoadedData["mPhaseNumber"];
+ 	mWindowMode = LoadedData["mWindowMode"];
+-	mIntegerScaling = LoadedData["mIntegerScaling"];
+ 	mRandom = LoadedData["mRandom"];
+ 	mDefaultPlatform = LoadedData["mDefaultPlatform"];
+ 	mCampaignName = LoadedData["mCampaignName"];
+@@ -107,6 +106,10 @@ bool sFodderParameters::FromJson(const std::string& pJson) {
+ 	else
+ 		mCheatsEnabled = false;
+ 
++	if (LoadedData.count("mIntegerScaling") > 0) {
++		mIntegerScaling = LoadedData["mIntegerScaling"];
++	}
++
+ 	return true;
+ }
+ 
+@@ -130,6 +133,7 @@ void sFodderParameters::PrepareOptions() {
+ 		("alternate-mouse", "Play with non-original mouse behaviour", cxxopts::value<bool>()->default_value("false"))
+ 		("w,window", "Start in window mode", cxxopts::value<bool>()->default_value("false"))
+ 		("window-scale", "Set the window scale", cxxopts::value<std::uint32_t>()->default_value("0"))
++		("integer-scaling", "Use integer scaling", cxxopts::value<bool>()->default_value("true"))
+ 
+ 		("cheats", "Enable cheat keys", cxxopts::value<bool>()->default_value("false"))
+ 		("max-sprite", "Set the maximum sprites", cxxopts::value<std::uint32_t>()->default_value("45"), "45")
+@@ -258,7 +262,7 @@ bool sFodderParameters::ProcessCLI(int argc, char *argv[]) {
+ 			mWindowScale = result["window-scale"].as<uint32>();
+ 
+ 		if (result.count("integer-scaling"))
+-			mIntegerScaling = result["integer"].as<bool>();
++			mIntegerScaling = result["integer-scaling"].as<bool>();
+ 
+ 		mRandom = result["random"].as<bool>();
+ 		if (result["random-save"].count()) {
+diff --git a/Source/Parameters.hpp b/Source/Parameters.hpp
+index 2ff9797..28d94f4 100644
+--- a/Source/Parameters.hpp
++++ b/Source/Parameters.hpp
+@@ -39,7 +39,7 @@ public:
+ 	bool mMouseLocked;			// Mouse is locked to window
+ 
+ 	bool mWindowMode;           // Start in a window
+-	bool mIntegerScaling;           // Use integer scaling in fullscreen mode
++	bool mIntegerScaling;       // Use integer scaling in fullscreen mode
+ 	size_t mWindowScale;		// Start with window scaled at
+ 	size_t mWindowRows;
+ 	size_t mWindowColumns;
+-- 
+2.25.1
+

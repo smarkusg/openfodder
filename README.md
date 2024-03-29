@@ -72,6 +72,7 @@ Open Fodder supports six demos from the Amiga platform, and three retail release
       --columns 22              Number of camera columns (default: 22)
       --rows 16                 Number of camera rows (default: 16)
   -w, --window                  Start in window mode
+      --integer-scaling         Set integer scaling (default: true)
       --window-scale arg        Set the window scale (default: 0)
       --cheats                  Enable cheat keys
 

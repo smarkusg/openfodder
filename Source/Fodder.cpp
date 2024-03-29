@@ -18416,7 +18416,7 @@ void cFodder::Start() {
 		if (!(mParams->mCampaignName.size() && Campaign_Load(mParams->mCampaignName))) {
 			Campaign_Selection();
 			// Exit pushed?
-			if (mGUI_SaveLoadAction == 1) }
+			if (mGUI_SaveLoadAction == 1) {
 #ifdef __AMIGAOS4__
 				//test AOS4 force exit
 				SDL_Quit();

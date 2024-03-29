@@ -1,0 +1,118 @@
+From 6a428acedb8cd83560288b1571015f70a2ee31c1 Mon Sep 17 00:00:00 2001
+From: Robert Crossfield <robcrossfield@gmail.com>
+Date: Sat, 26 Aug 2023 08:22:14 +1000
+Subject: [PATCH 22/50] Fix PC helicopter intro slightly adjust amiga intro
+ speed
+
+---
+ Source/Amiga/Graphics_Amiga.cpp | 10 +++++++---
+ Source/Fodder.cpp               | 12 ++++++------
+ Source/PC/Graphics_PC.cpp       | 13 +++++++++----
+ 3 files changed, 22 insertions(+), 13 deletions(-)
+
+diff --git a/Source/Amiga/Graphics_Amiga.cpp b/Source/Amiga/Graphics_Amiga.cpp
+index 92611e9..c33b7d5 100644
+--- a/Source/Amiga/Graphics_Amiga.cpp
++++ b/Source/Amiga/Graphics_Amiga.cpp
+@@ -1555,18 +1555,22 @@ void cGraphics_Amiga::Mission_Intro_Play(const bool pShowHelicopter, const eTile
+ 		mFodder->mVideo_Draw_PosY = 163;
+ 		Video_Draw_16_Offset(word_4286F);
+ 
+-		word_4286F += 3;
++		// Front
++		word_4286F += 4;
+ 		if (word_4286F >= 320)
+ 			word_4286F = 0;
+ 
+-		word_42871 += 2;
++		// Middle
++		word_42871 += 3;
+ 		if (word_42871 >= 320)
+ 			word_42871 = 0;
+ 
+-		word_42873 += 1;
++		// Back
++		word_42873 += 2;
+ 		if (word_42873 >= 320)
+ 			word_42873 = 0;
+ 
++		// Very Back
+ 		++word_42875;
+ 		if (word_42875 >= 320)
+ 			word_42875 = 0;
+diff --git a/Source/Fodder.cpp b/Source/Fodder.cpp
+index aab35b4..93a00d0 100644
+--- a/Source/Fodder.cpp
++++ b/Source/Fodder.cpp
+@@ -3515,23 +3515,23 @@ void cFodder::Sound_Play(sSprite* pSprite, int16 pSoundEffect, int16 pData8) {
+ 
+ void cFodder::Mission_Intro_Helicopter_Start() {
+     mHelicopterPosX = 0x01500000;
+-    if (mVersionCurrent->isPC())
+-        mHelicopterPosY = 0x00260000;
+-    else
++   // if (mVersionCurrent->isPC())
++    //    mHelicopterPosY = 0x00260000;
++   // else
+         mHelicopterPosY = 0x001E0000;
+ 
+-    if (mVersionCurrent->isPC()) {
++    /*if (mVersionCurrent->isPC()) {
+         mBriefing_Helicopter_Off1 = mBriefing_Helicopter_Offsets[0];
+         mBriefing_Helicopter_Off2 = mBriefing_Helicopter_Offsets[1];
+         mBriefing_Helicopter_Off3 = mBriefing_Helicopter_Offsets[2];
+         mBriefing_Helicopter_Off4 = &mBriefing_Helicopter_Offsets[3];
+     }
+-    else {
++    else {*/
+         mBriefing_Helicopter_Off1 = mBriefing_Helicopter_Offsets_Amiga[0];
+         mBriefing_Helicopter_Off2 = mBriefing_Helicopter_Offsets_Amiga[1];
+         mBriefing_Helicopter_Off3 = mBriefing_Helicopter_Offsets_Amiga[2];
+         mBriefing_Helicopter_Off4 = &mBriefing_Helicopter_Offsets_Amiga[3];
+-    }
++    //}
+ 
+     mBriefing_ParaHeli_Frame = 0;
+     mBriefing_Helicopter_Moving = -1;
+diff --git a/Source/PC/Graphics_PC.cpp b/Source/PC/Graphics_PC.cpp
+index 90bb6af..2841cc6 100644
+--- a/Source/PC/Graphics_PC.cpp
++++ b/Source/PC/Graphics_PC.cpp
+@@ -995,25 +995,30 @@ void cGraphics_PC::Mission_Intro( const std::vector<cPosition>& pPositions, cons
+         mMission_Intro_DrawY = pPositions[4].mY;
+ 		Mission_Intro_Render_2( mImageMissionIntro.mData, word_4286F );
+ 
+-		word_4286F += 8;
++		// Front
++		word_4286F += 6;
+ 		if (word_4286F >= 320)
+ 			word_4286F = 0;
+ 
++		// Middle
+ 		word_42871 += 4;
+ 		if (word_42871 >= 320)
+ 			word_42871 = 0;
+ 
+-		word_42873 += 2;
++		// Back
++		word_42873 += 3;
+ 		if (word_42873 >= 320)
+ 			word_42873 = 0;
+ 
+-		++word_42875;
++		// Very Back
++		word_42875 += 2;
+ 		if (word_42875 >= 320)
+ 			word_42875 = 0;
+ 
+         mFodder->Mouse_Inputs_Get();
+         mFodder->Video_SurfaceRender();
+-        mFodder->Cycle_End(45);
++		mFodder->mWindow->Cycle();
++		mFodder->eventsProcess();
+ 
+ 		if (mFodder->mMouseButtonStatus || (mFodder->mPhase_Aborted && mFodder->word_428D8)) {
+ 			mFodder->word_428D8 = 0;
+-- 
+2.25.1
+

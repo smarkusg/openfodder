@@ -1,0 +1,38 @@
+From 239716cb2d34b97ef3157777bd6f1fd26fdfa8f4 Mon Sep 17 00:00:00 2001
+From: vanfanel <redwindwanderer@gmail.com>
+Date: Fri, 9 Feb 2024 21:09:54 +0100
+Subject: [PATCH 26/50] Correct helicopter scene layer scrolling increments to
+ restore proper parallax effect.
+
+---
+ Source/Amiga/Graphics_Amiga.cpp | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/Source/Amiga/Graphics_Amiga.cpp b/Source/Amiga/Graphics_Amiga.cpp
+index 62b8468..5c88162 100644
+--- a/Source/Amiga/Graphics_Amiga.cpp
++++ b/Source/Amiga/Graphics_Amiga.cpp
+@@ -1556,17 +1556,17 @@ void cGraphics_Amiga::Mission_Intro_Play(const bool pShowHelicopter, const eTile
+ 		Video_Draw_16_Offset(word_4286F);
+ 
+ 		// Front
+-		word_4286F += 4;
++		word_4286F += 5;
+ 		if (word_4286F >= 320)
+ 			word_4286F = 0;
+ 
+ 		// Middle
+-		word_42871 += 2;
++		word_42871 += 4;
+ 		if (word_42871 >= 320)
+ 			word_42871 = 0;
+ 
+ 		// Back
+-		word_42873 += 1;
++		word_42873 += 2;
+ 		if (word_42873 >= 320)
+ 			word_42873 = 0;
+ 
+-- 
+2.25.1
+
