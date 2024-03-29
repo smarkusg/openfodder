@@ -2913,6 +2913,11 @@ void cFodder::eventProcess(const cEvent& pEvent) {
         break;
 
     case eEvent_Quit:
+#ifdef __AMIGAOS4__
+	//test AOS4 force exit
+	SDL_Quit();
+	exit(0);
+#endif
         Exit(0);
         break;
     }
