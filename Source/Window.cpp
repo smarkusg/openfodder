@@ -445,11 +445,16 @@ void cWindow::ToggleFullscreen() {
 
 		mScalerPrevious = mScaler;
 		SetWindowSize( CalculateFullscreenSize() );
-
+#ifdef __AMIGAOS4__ //AOS4 cannot roll quickly
+SDL_Delay(150); 
+#endif 
 		SDL_SetWindowFullscreen( mWindow, SDL_WINDOW_FULLSCREEN_DESKTOP );
 		mWindowMode = false;
 	} else {
 		mWindowMode = true;
+#ifdef __AMIGAOS4__ //AOS4 cannot roll quickly
+SDL_Delay(50);
+#endif 
 		SetWindowSize( mScalerPrevious );
 	}
 }
