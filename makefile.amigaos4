@@ -8,7 +8,7 @@ SDL2_CFLAGS = -I/SDK/local/newlib/include/SDL2 -I/opt/ppc-amigaos/usr/include -I
 SDL2_LIBS = -L//opt/ppc-amigaos/usr/lib -lSDL2_mixer -lSDL2 -lmodplug -lpthread
 
 WARNINGS = -Wall -Wwrite-strings -Wno-multichar -Wno-comment -Wno-sign-compare -Wno-switch -Wno-unused-but-set-variable
-CXXFLAGS = -O2 -fno-plt -pipe -D_ARCH_G3 -mcpu=G3 -mno-altivec  -mstrict-align -mcrt=newlib -mbig-endian -flto=auto -std=gnu++14 -g $(WARNINGS) -I./Source $(SDL2_CFLAGS) -D_GLIBCXX_USE_C99_STDLIB -D__AMIGADATE__=\"$(AMIGADATE)\" -D__AMIGAOS4__
+CXXFLAGS = -O2 -fno-plt -pipe -D_ARCH_G3 -mcpu=G3 -mno-altivec  -mstrict-align -mcrt=newlib -mbig-endian -flto=auto -std=gnu++14 -gstab $(WARNINGS) -I./Source $(SDL2_CFLAGS) -D_GLIBCXX_USE_C99_STDLIB -D__AMIGADATE__=\"$(AMIGADATE)\" -D__AMIGAOS4__
 LDFLAGS = -static -athread=single -flto=auto
 LIBS = $(SDL2_LIBS) -lunix
 
