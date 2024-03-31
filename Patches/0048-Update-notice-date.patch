@@ -1,0 +1,1159 @@
+From b47b56546e56b3b04762ccfcac5e5f011f7a8e1e Mon Sep 17 00:00:00 2001
+From: Robert Crossfield <robcrossfield@gmail.com>
+Date: Fri, 22 Mar 2024 06:55:46 +1100
+Subject: [PATCH 48/50] Update notice date
+
+---
+ Source/About.cpp                     | 2 +-
+ Source/About.hpp                     | 2 +-
+ Source/Amiga/Graphics_Amiga.cpp      | 2 +-
+ Source/Amiga/Graphics_Amiga.hpp      | 2 +-
+ Source/Amiga/Graphics_Amiga2.cpp     | 2 +-
+ Source/Amiga/Graphics_Amiga2.hpp     | 2 +-
+ Source/Amiga/IntroData_Amiga.cpp     | 2 +-
+ Source/Amiga/Resource_Amiga_File.cpp | 2 +-
+ Source/Amiga/Resource_Amiga_File.hpp | 2 +-
+ Source/Amiga/Sound_Amiga.cpp         | 2 +-
+ Source/Amiga/Sound_Amiga.hpp         | 2 +-
+ Source/Amiga/SpriteData_Amiga.hpp    | 2 +-
+ Source/Campaign.cpp                  | 2 +-
+ Source/Campaign.hpp                  | 2 +-
+ Source/CopyProtection.cpp            | 2 +-
+ Source/CopyProtection.hpp            | 2 +-
+ Source/Debugger.cpp                  | 2 +-
+ Source/Debugger.hpp                  | 2 +-
+ Source/Dimension.hpp                 | 2 +-
+ Source/Event.cpp                     | 2 +-
+ Source/Event.hpp                     | 2 +-
+ Source/Fodder.cpp                    | 2 +-
+ Source/Fodder.hpp                    | 2 +-
+ Source/FontData.cpp                  | 2 +-
+ Source/FontData.hpp                  | 2 +-
+ Source/GUI_Element.cpp               | 2 +-
+ Source/GUI_Element.hpp               | 2 +-
+ Source/GameData.cpp                  | 2 +-
+ Source/GameData.hpp                  | 2 +-
+ Source/Graphics.cpp                  | 2 +-
+ Source/Graphics.hpp                  | 2 +-
+ Source/IntroData.hpp                 | 2 +-
+ Source/Map/Map.cpp                   | 2 +-
+ Source/Map/Map.hpp                   | 2 +-
+ Source/Map/Original.cpp              | 2 +-
+ Source/Map/Original.hpp              | 2 +-
+ Source/Map/Random.cpp                | 2 +-
+ Source/Map/Random.hpp                | 2 +-
+ Source/MapData.cpp                   | 2 +-
+ Source/PC/Graphics_PC.cpp            | 2 +-
+ Source/PC/Graphics_PC.hpp            | 2 +-
+ Source/PC/IntroData_PC.cpp           | 2 +-
+ Source/PC/Resource_PC_CD.cpp         | 2 +-
+ Source/PC/Sound_PC.cpp               | 2 +-
+ Source/PC/Sound_PC.hpp               | 2 +-
+ Source/PC/Sound_PC2.cpp              | 2 +-
+ Source/PC/Sound_PC2.hpp              | 2 +-
+ Source/PC/SpriteData_PC.hpp          | 2 +-
+ Source/Parameters.cpp                | 2 +-
+ Source/Parameters.hpp                | 2 +-
+ Source/Position.hpp                  | 2 +-
+ Source/Recruits.cpp                  | 2 +-
+ Source/Recruits.hpp                  | 2 +-
+ Source/ResourceMan.hpp               | 2 +-
+ Source/Resources.cpp                 | 2 +-
+ Source/Resources.hpp                 | 2 +-
+ Source/ScriptingEngine.cpp           | 2 +-
+ Source/ScriptingEngine.hpp           | 2 +-
+ Source/Sound.cpp                     | 2 +-
+ Source/Sound.hpp                     | 2 +-
+ Source/SpriteSheet.cpp               | 2 +-
+ Source/SpriteSheet.hpp               | 2 +-
+ Source/Sprites.cpp                   | 2 +-
+ Source/Sprites.hpp                   | 2 +-
+ Source/Start.cpp                     | 2 +-
+ Source/Start_Emscripten.cpp          | 2 +-
+ Source/Structures/Barracks.cpp       | 2 +-
+ Source/Structures/Barracks.hpp       | 2 +-
+ Source/Tiles.cpp                     | 2 +-
+ Source/Tiles.hpp                     | 2 +-
+ Source/Types.hpp                     | 2 +-
+ Source/UnitTesting.cpp               | 2 +-
+ Source/UnitTesting.hpp               | 2 +-
+ Source/Utils/pseudorand.hpp          | 2 +-
+ Source/Version.hpp                   | 2 +-
+ Source/Versions.cpp                  | 2 +-
+ Source/Versions.hpp                  | 2 +-
+ Source/Versions_Files.hpp            | 2 +-
+ Source/Window.cpp                    | 2 +-
+ Source/Window.hpp                    | 2 +-
+ Source/stdafx.cpp                    | 2 +-
+ Source/stdafx.hpp                    | 2 +-
+ 82 files changed, 82 insertions(+), 82 deletions(-)
+
+diff --git a/Source/About.cpp b/Source/About.cpp
+index 35e5d86..58ebed2 100644
+--- a/Source/About.cpp
++++ b/Source/About.cpp
+@@ -2,7 +2,7 @@
+  *  Open Fodder
+  *  ---------------
+  *
+- *  Copyright (C) 2008-2018 Open Fodder
++ *  Copyright (C) 2008-2024 Open Fodder
+  *
+  *  This program is free software; you can redistribute it and/or modify
+  *  it under the terms of the GNU General Public License as published by
+diff --git a/Source/About.hpp b/Source/About.hpp
+index 911ed72..9cd3857 100644
+--- a/Source/About.hpp
++++ b/Source/About.hpp
+@@ -2,7 +2,7 @@
+  *  Open Fodder
+  *  ---------------
+  *
+- *  Copyright (C) 2008-2018 Open Fodder
++ *  Copyright (C) 2008-2024 Open Fodder
+  *
+  *  This program is free software; you can redistribute it and/or modify
+  *  it under the terms of the GNU General Public License as published by
+diff --git a/Source/Amiga/Graphics_Amiga.cpp b/Source/Amiga/Graphics_Amiga.cpp
+index 276607b..1c3f6b6 100644
+--- a/Source/Amiga/Graphics_Amiga.cpp
++++ b/Source/Amiga/Graphics_Amiga.cpp
+@@ -2,7 +2,7 @@
+ *  Open Fodder
+ *  ---------------
+ *
+-*  Copyright (C) 2008-2018 Open Fodder
++*  Copyright (C) 2008-2024 Open Fodder
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+diff --git a/Source/Amiga/Graphics_Amiga.hpp b/Source/Amiga/Graphics_Amiga.hpp
+index b5b4d26..b031f87 100644
+--- a/Source/Amiga/Graphics_Amiga.hpp
++++ b/Source/Amiga/Graphics_Amiga.hpp
+@@ -2,7 +2,7 @@
+  *  Open Fodder
+  *  ---------------
+  *
+- *  Copyright (C) 2008-2018 Open Fodder
++ *  Copyright (C) 2008-2024 Open Fodder
+  *
+  *  This program is free software; you can redistribute it and/or modify
+  *  it under the terms of the GNU General Public License as published by
+diff --git a/Source/Amiga/Graphics_Amiga2.cpp b/Source/Amiga/Graphics_Amiga2.cpp
+index e593b70..22e5e7f 100644
+--- a/Source/Amiga/Graphics_Amiga2.cpp
++++ b/Source/Amiga/Graphics_Amiga2.cpp
+@@ -2,7 +2,7 @@
+ *  Open Fodder
+ *  ---------------
+ *
+-*  Copyright (C) 2008-2018 Open Fodder
++*  Copyright (C) 2008-2024 Open Fodder
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+diff --git a/Source/Amiga/Graphics_Amiga2.hpp b/Source/Amiga/Graphics_Amiga2.hpp
+index 3a7657c..97d6d6d 100644
+--- a/Source/Amiga/Graphics_Amiga2.hpp
++++ b/Source/Amiga/Graphics_Amiga2.hpp
+@@ -2,7 +2,7 @@
+  *  Open Fodder
+  *  ---------------
+  *
+- *  Copyright (C) 2008-2018 Open Fodder
++ *  Copyright (C) 2008-2024 Open Fodder
+  *
+  *  This program is free software; you can redistribute it and/or modify
+  *  it under the terms of the GNU General Public License as published by
+diff --git a/Source/Amiga/IntroData_Amiga.cpp b/Source/Amiga/IntroData_Amiga.cpp
+index 0784449..8f23249 100644
+--- a/Source/Amiga/IntroData_Amiga.cpp
++++ b/Source/Amiga/IntroData_Amiga.cpp
+@@ -2,7 +2,7 @@
+  *  Open Fodder
+  *  ---------------
+  *
+- *  Copyright (C) 2008-2018 Open Fodder
++ *  Copyright (C) 2008-2024 Open Fodder
+  *
+  *  This program is free software; you can redistribute it and/or modify
+  *  it under the terms of the GNU General Public License as published by
+diff --git a/Source/Amiga/Resource_Amiga_File.cpp b/Source/Amiga/Resource_Amiga_File.cpp
+index 048cf51..9c777cf 100644
+--- a/Source/Amiga/Resource_Amiga_File.cpp
++++ b/Source/Amiga/Resource_Amiga_File.cpp
+@@ -2,7 +2,7 @@
+  *  Open Fodder
+  *  ---------------
+  *
+- *  Copyright (C) 2008-2018 Open Fodder
++ *  Copyright (C) 2008-2024 Open Fodder
+  *
+  *  This program is free software; you can redistribute it and/or modify
+  *  it under the terms of the GNU General Public License as published by
+diff --git a/Source/Amiga/Resource_Amiga_File.hpp b/Source/Amiga/Resource_Amiga_File.hpp
+index 847ea07..7aecd6c 100644
+--- a/Source/Amiga/Resource_Amiga_File.hpp
++++ b/Source/Amiga/Resource_Amiga_File.hpp
+@@ -2,7 +2,7 @@
+  *  Open Fodder
+  *  ---------------
+  *
+- *  Copyright (C) 2008-2018 Open Fodder
++ *  Copyright (C) 2008-2024 Open Fodder
+  *
+  *  This program is free software; you can redistribute it and/or modify
+  *  it under the terms of the GNU General Public License as published by
+diff --git a/Source/Amiga/Sound_Amiga.cpp b/Source/Amiga/Sound_Amiga.cpp
+index c2f1809..25f3b37 100644
+--- a/Source/Amiga/Sound_Amiga.cpp
++++ b/Source/Amiga/Sound_Amiga.cpp
+@@ -2,7 +2,7 @@
+  *  Open Fodder
+  *  ---------------
+  *
+- *  Copyright (C) 2008-2018 Open Fodder
++ *  Copyright (C) 2008-2024 Open Fodder
+  *
+  *  This program is free software; you can redistribute it and/or modify
+  *  it under the terms of the GNU General Public License as published by
+diff --git a/Source/Amiga/Sound_Amiga.hpp b/Source/Amiga/Sound_Amiga.hpp
+index 9cd59a6..b193d0c 100644
+--- a/Source/Amiga/Sound_Amiga.hpp
++++ b/Source/Amiga/Sound_Amiga.hpp
+@@ -2,7 +2,7 @@
+  *  Open Fodder
+  *  ---------------
+  *
+- *  Copyright (C) 2008-2018 Open Fodder
++ *  Copyright (C) 2008-2024 Open Fodder
+  *
+  *  This program is free software; you can redistribute it and/or modify
+  *  it under the terms of the GNU General Public License as published by
+diff --git a/Source/Amiga/SpriteData_Amiga.hpp b/Source/Amiga/SpriteData_Amiga.hpp
+index da67e3c..faf4e7b 100644
+--- a/Source/Amiga/SpriteData_Amiga.hpp
++++ b/Source/Amiga/SpriteData_Amiga.hpp
+@@ -2,7 +2,7 @@
+  *  Open Fodder
+  *  ---------------
+  *
+- *  Copyright (C) 2008-2018 Open Fodder
++ *  Copyright (C) 2008-2024 Open Fodder
+  *
+  *  This program is free software; you can redistribute it and/or modify
+  *  it under the terms of the GNU General Public License as published by
+diff --git a/Source/Campaign.cpp b/Source/Campaign.cpp
+index 555932b..8d33730 100644
+--- a/Source/Campaign.cpp
++++ b/Source/Campaign.cpp
+@@ -2,7 +2,7 @@
+  *  Open Fodder
+  *  ---------------
+  *
+- *  Copyright (C) 2008-2018 Open Fodder
++ *  Copyright (C) 2008-2024 Open Fodder
+  *
+  *  This program is free software; you can redistribute it and/or modify
+  *  it under the terms of the GNU General Public License as published by
+diff --git a/Source/Campaign.hpp b/Source/Campaign.hpp
+index 78da65a..2c345e5 100644
+--- a/Source/Campaign.hpp
++++ b/Source/Campaign.hpp
+@@ -2,7 +2,7 @@
+  *  Open Fodder
+  *  ---------------
+  *
+- *  Copyright (C) 2008-2018 Open Fodder
++ *  Copyright (C) 2008-2024 Open Fodder
+  *
+  *  This program is free software; you can redistribute it and/or modify
+  *  it under the terms of the GNU General Public License as published by
+diff --git a/Source/CopyProtection.cpp b/Source/CopyProtection.cpp
+index 038de39..fdc2a9f 100644
+--- a/Source/CopyProtection.cpp
++++ b/Source/CopyProtection.cpp
+@@ -2,7 +2,7 @@
+  *  Open Fodder
+  *  ---------------
+  *
+- *  Copyright (C) 2008-2018 Open Fodder
++ *  Copyright (C) 2008-2024 Open Fodder
+  *
+  *  This program is free software; you can redistribute it and/or modify
+  *  it under the terms of the GNU General Public License as published by
+diff --git a/Source/CopyProtection.hpp b/Source/CopyProtection.hpp
+index 3ef9a64..244ceb6 100644
+--- a/Source/CopyProtection.hpp
++++ b/Source/CopyProtection.hpp
+@@ -2,7 +2,7 @@
+ *  Open Fodder
+ *  ---------------
+ *
+-*  Copyright (C) 2008-2018 Open Fodder
++*  Copyright (C) 2008-2024 Open Fodder
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+diff --git a/Source/Debugger.cpp b/Source/Debugger.cpp
+index ba848d9..44559ce 100644
+--- a/Source/Debugger.cpp
++++ b/Source/Debugger.cpp
+@@ -2,7 +2,7 @@
+  *  Open Fodder
+  *  ---------------
+  *
+- *  Copyright (C) 2008-2018 Open Fodder
++ *  Copyright (C) 2008-2024 Open Fodder
+  *
+  *  This program is free software; you can redistribute it and/or modify
+  *  it under the terms of the GNU General Public License as published by
+diff --git a/Source/Debugger.hpp b/Source/Debugger.hpp
+index 3adcd5c..e4ea8be 100644
+--- a/Source/Debugger.hpp
++++ b/Source/Debugger.hpp
+@@ -2,7 +2,7 @@
+  *  Open Fodder
+  *  ---------------
+  *
+- *  Copyright (C) 2008-2018 Open Fodder
++ *  Copyright (C) 2008-2024 Open Fodder
+  *
+  *  This program is free software; you can redistribute it and/or modify
+  *  it under the terms of the GNU General Public License as published by
+diff --git a/Source/Dimension.hpp b/Source/Dimension.hpp
+index bf8de0a..c98a0ac 100644
+--- a/Source/Dimension.hpp
++++ b/Source/Dimension.hpp
+@@ -2,7 +2,7 @@
+  *  Open Fodder
+  *  ---------------
+  *
+- *  Copyright (C) 2008-2018 Open Fodder
++ *  Copyright (C) 2008-2024 Open Fodder
+  *
+  *  This program is free software; you can redistribute it and/or modify
+  *  it under the terms of the GNU General Public License as published by
+diff --git a/Source/Event.cpp b/Source/Event.cpp
+index b62e663..e45242d 100644
+--- a/Source/Event.cpp
++++ b/Source/Event.cpp
+@@ -2,7 +2,7 @@
+  *  Open Fodder
+  *  ---------------
+  *
+- *  Copyright (C) 2008-2018 Open Fodder
++ *  Copyright (C) 2008-2024 Open Fodder
+  *
+  *  This program is free software; you can redistribute it and/or modify
+  *  it under the terms of the GNU General Public License as published by
+diff --git a/Source/Event.hpp b/Source/Event.hpp
+index c2357ec..9385969 100644
+--- a/Source/Event.hpp
++++ b/Source/Event.hpp
+@@ -2,7 +2,7 @@
+  *  Open Fodder
+  *  ---------------
+  *
+- *  Copyright (C) 2008-2018 Open Fodder
++ *  Copyright (C) 2008-2024 Open Fodder
+  *
+  *  This program is free software; you can redistribute it and/or modify
+  *  it under the terms of the GNU General Public License as published by
+diff --git a/Source/Fodder.cpp b/Source/Fodder.cpp
+index 1af1f61..c4b5153 100644
+--- a/Source/Fodder.cpp
++++ b/Source/Fodder.cpp
+@@ -2,7 +2,7 @@
+  *  Open Fodder
+  *  ---------------
+  *
+- *  Copyright (C) 2008-2018 Open Fodder
++ *  Copyright (C) 2008-2024 Open Fodder
+  *
+  *  This program is free software; you can redistribute it and/or modify
+  *  it under the terms of the GNU General Public License as published by
+diff --git a/Source/Fodder.hpp b/Source/Fodder.hpp
+index 2213df3..c848ae4 100644
+--- a/Source/Fodder.hpp
++++ b/Source/Fodder.hpp
+@@ -2,7 +2,7 @@
+  *  Open Fodder
+  *  ---------------
+  *
+- *  Copyright (C) 2008-2018 Open Fodder
++ *  Copyright (C) 2008-2024 Open Fodder
+  *
+  *  This program is free software; you can redistribute it and/or modify
+  *  it under the terms of the GNU General Public License as published by
+diff --git a/Source/FontData.cpp b/Source/FontData.cpp
+index 5dae938..6ea9090 100644
+--- a/Source/FontData.cpp
++++ b/Source/FontData.cpp
+@@ -2,7 +2,7 @@
+  *  Open Fodder
+  *  ---------------
+  *
+- *  Copyright (C) 2008-2018 Open Fodder
++ *  Copyright (C) 2008-2024 Open Fodder
+  *
+  *  This program is free software; you can redistribute it and/or modify
+  *  it under the terms of the GNU General Public License as published by
+diff --git a/Source/FontData.hpp b/Source/FontData.hpp
+index 87a03d0..8c0f818 100644
+--- a/Source/FontData.hpp
++++ b/Source/FontData.hpp
+@@ -2,7 +2,7 @@
+  *  Open Fodder
+  *  ---------------
+  *
+- *  Copyright (C) 2008-2018 Open Fodder
++ *  Copyright (C) 2008-2024 Open Fodder
+  *
+  *  This program is free software; you can redistribute it and/or modify
+  *  it under the terms of the GNU General Public License as published by
+diff --git a/Source/GUI_Element.cpp b/Source/GUI_Element.cpp
+index 1f7e29a..17ec34c 100644
+--- a/Source/GUI_Element.cpp
++++ b/Source/GUI_Element.cpp
+@@ -2,7 +2,7 @@
+  *  Open Fodder
+  *  ---------------
+  *
+- *  Copyright (C) 2008-2018 Open Fodder
++ *  Copyright (C) 2008-2024 Open Fodder
+  *
+  *  This program is free software; you can redistribute it and/or modify
+  *  it under the terms of the GNU General Public License as published by
+diff --git a/Source/GUI_Element.hpp b/Source/GUI_Element.hpp
+index 1a24eab..ce17507 100644
+--- a/Source/GUI_Element.hpp
++++ b/Source/GUI_Element.hpp
+@@ -2,7 +2,7 @@
+  *  Open Fodder
+  *  ---------------
+  *
+- *  Copyright (C) 2008-2018 Open Fodder
++ *  Copyright (C) 2008-2024 Open Fodder
+  *
+  *  This program is free software; you can redistribute it and/or modify
+  *  it under the terms of the GNU General Public License as published by
+diff --git a/Source/GameData.cpp b/Source/GameData.cpp
+index 0950463..6eece93 100644
+--- a/Source/GameData.cpp
++++ b/Source/GameData.cpp
+@@ -2,7 +2,7 @@
+ *  Open Fodder
+ *  ---------------
+ *
+-*  Copyright (C) 2008-2018 Open Fodder
++*  Copyright (C) 2008-2024 Open Fodder
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+diff --git a/Source/GameData.hpp b/Source/GameData.hpp
+index 8bfd031..bb2eab8 100644
+--- a/Source/GameData.hpp
++++ b/Source/GameData.hpp
+@@ -2,7 +2,7 @@
+ *  Open Fodder
+ *  ---------------
+ *
+-*  Copyright (C) 2008-2018 Open Fodder
++*  Copyright (C) 2008-2024 Open Fodder
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+diff --git a/Source/Graphics.cpp b/Source/Graphics.cpp
+index 6280e94..8bbb700 100644
+--- a/Source/Graphics.cpp
++++ b/Source/Graphics.cpp
+@@ -2,7 +2,7 @@
+  *  Open Fodder
+  *  ---------------
+  *
+- *  Copyright (C) 2008-2018 Open Fodder
++ *  Copyright (C) 2008-2024 Open Fodder
+  *
+  *  This program is free software; you can redistribute it and/or modify
+  *  it under the terms of the GNU General Public License as published by
+diff --git a/Source/Graphics.hpp b/Source/Graphics.hpp
+index 71da84a..2f56ba4 100644
+--- a/Source/Graphics.hpp
++++ b/Source/Graphics.hpp
+@@ -2,7 +2,7 @@
+  *  Open Fodder
+  *  ---------------
+  *
+- *  Copyright (C) 2008-2018 Open Fodder
++ *  Copyright (C) 2008-2024 Open Fodder
+  *
+  *  This program is free software; you can redistribute it and/or modify
+  *  it under the terms of the GNU General Public License as published by
+diff --git a/Source/IntroData.hpp b/Source/IntroData.hpp
+index fd0c518..8f00f2a 100644
+--- a/Source/IntroData.hpp
++++ b/Source/IntroData.hpp
+@@ -2,7 +2,7 @@
+  *  Open Fodder
+  *  ---------------
+  *
+- *  Copyright (C) 2008-2018 Open Fodder
++ *  Copyright (C) 2008-2024 Open Fodder
+  *
+  *  This program is free software; you can redistribute it and/or modify
+  *  it under the terms of the GNU General Public License as published by
+diff --git a/Source/Map/Map.cpp b/Source/Map/Map.cpp
+index 42ace38..456ff29 100644
+--- a/Source/Map/Map.cpp
++++ b/Source/Map/Map.cpp
+@@ -2,7 +2,7 @@
+  *  Open Fodder
+  *  ---------------
+  *
+- *  Copyright (C) 2008-2018 Open Fodder
++ *  Copyright (C) 2008-2024 Open Fodder
+  *
+  *  This program is free software; you can redistribute it and/or modify
+  *  it under the terms of the GNU General Public License as published by
+diff --git a/Source/Map/Map.hpp b/Source/Map/Map.hpp
+index 7795a95..0b5abfd 100644
+--- a/Source/Map/Map.hpp
++++ b/Source/Map/Map.hpp
+@@ -2,7 +2,7 @@
+  *  Open Fodder
+  *  ---------------
+  *
+- *  Copyright (C) 2008-2018 Open Fodder
++ *  Copyright (C) 2008-2024 Open Fodder
+  *
+  *  This program is free software; you can redistribute it and/or modify
+  *  it under the terms of the GNU General Public License as published by
+diff --git a/Source/Map/Original.cpp b/Source/Map/Original.cpp
+index cbbfedb..c2bbba8 100644
+--- a/Source/Map/Original.cpp
++++ b/Source/Map/Original.cpp
+@@ -2,7 +2,7 @@
+  *  Open Fodder
+  *  ---------------
+  *
+- *  Copyright (C) 2008-2018 Open Fodder
++ *  Copyright (C) 2008-2024 Open Fodder
+  *
+  *  This program is free software; you can redistribute it and/or modify
+  *  it under the terms of the GNU General Public License as published by
+diff --git a/Source/Map/Original.hpp b/Source/Map/Original.hpp
+index 5b84946..b161501 100644
+--- a/Source/Map/Original.hpp
++++ b/Source/Map/Original.hpp
+@@ -2,7 +2,7 @@
+  *  Open Fodder
+  *  ---------------
+  *
+- *  Copyright (C) 2008-2018 Open Fodder
++ *  Copyright (C) 2008-2024 Open Fodder
+  *
+  *  This program is free software; you can redistribute it and/or modify
+  *  it under the terms of the GNU General Public License as published by
+diff --git a/Source/Map/Random.cpp b/Source/Map/Random.cpp
+index c88d97d..ab71a79 100644
+--- a/Source/Map/Random.cpp
++++ b/Source/Map/Random.cpp
+@@ -2,7 +2,7 @@
+  *  Open Fodder
+  *  ---------------
+  *
+- *  Copyright (C) 2008-2018 Open Fodder
++ *  Copyright (C) 2008-2024 Open Fodder
+  *
+  *  This program is free software; you can redistribute it and/or modify
+  *  it under the terms of the GNU General Public License as published by
+diff --git a/Source/Map/Random.hpp b/Source/Map/Random.hpp
+index f14f19d..32ddf3a 100644
+--- a/Source/Map/Random.hpp
++++ b/Source/Map/Random.hpp
+@@ -2,7 +2,7 @@
+  *  Open Fodder
+  *  ---------------
+  *
+- *  Copyright (C) 2008-2018 Open Fodder
++ *  Copyright (C) 2008-2024 Open Fodder
+  *
+  *  This program is free software; you can redistribute it and/or modify
+  *  it under the terms of the GNU General Public License as published by
+diff --git a/Source/MapData.cpp b/Source/MapData.cpp
+index 8061716..aacb83d 100644
+--- a/Source/MapData.cpp
++++ b/Source/MapData.cpp
+@@ -2,7 +2,7 @@
+  *  Open Fodder
+  *  ---------------
+  *
+- *  Copyright (C) 2008-2018 Open Fodder
++ *  Copyright (C) 2008-2024 Open Fodder
+  *
+  *  This program is free software; you can redistribute it and/or modify
+  *  it under the terms of the GNU General Public License as published by
+diff --git a/Source/PC/Graphics_PC.cpp b/Source/PC/Graphics_PC.cpp
+index df1deb8..e354ee5 100644
+--- a/Source/PC/Graphics_PC.cpp
++++ b/Source/PC/Graphics_PC.cpp
+@@ -2,7 +2,7 @@
+  *  Open Fodder
+  *  ---------------
+  *
+- *  Copyright (C) 2008-2018 Open Fodder
++ *  Copyright (C) 2008-2024 Open Fodder
+  *
+  *  This program is free software; you can redistribute it and/or modify
+  *  it under the terms of the GNU General Public License as published by
+diff --git a/Source/PC/Graphics_PC.hpp b/Source/PC/Graphics_PC.hpp
+index af4b3f6..3f2eda4 100644
+--- a/Source/PC/Graphics_PC.hpp
++++ b/Source/PC/Graphics_PC.hpp
+@@ -2,7 +2,7 @@
+  *  Open Fodder
+  *  ---------------
+  *
+- *  Copyright (C) 2008-2018 Open Fodder
++ *  Copyright (C) 2008-2024 Open Fodder
+  *
+  *  This program is free software; you can redistribute it and/or modify
+  *  it under the terms of the GNU General Public License as published by
+diff --git a/Source/PC/IntroData_PC.cpp b/Source/PC/IntroData_PC.cpp
+index 02882f1..1ef581d 100644
+--- a/Source/PC/IntroData_PC.cpp
++++ b/Source/PC/IntroData_PC.cpp
+@@ -2,7 +2,7 @@
+  *  Open Fodder
+  *  ---------------
+  *
+- *  Copyright (C) 2008-2018 Open Fodder
++ *  Copyright (C) 2008-2024 Open Fodder
+  *
+  *  This program is free software; you can redistribute it and/or modify
+  *  it under the terms of the GNU General Public License as published by
+diff --git a/Source/PC/Resource_PC_CD.cpp b/Source/PC/Resource_PC_CD.cpp
+index a40984e..98b3592 100644
+--- a/Source/PC/Resource_PC_CD.cpp
++++ b/Source/PC/Resource_PC_CD.cpp
+@@ -2,7 +2,7 @@
+  *  Open Fodder
+  *  ---------------
+  *
+- *  Copyright (C) 2008-2018 Open Fodder
++ *  Copyright (C) 2008-2024 Open Fodder
+  *
+  *  This program is free software; you can redistribute it and/or modify
+  *  it under the terms of the GNU General Public License as published by
+diff --git a/Source/PC/Sound_PC.cpp b/Source/PC/Sound_PC.cpp
+index 43ac00d..ad69e1e 100644
+--- a/Source/PC/Sound_PC.cpp
++++ b/Source/PC/Sound_PC.cpp
+@@ -2,7 +2,7 @@
+  *  Open Fodder
+  *  ---------------
+  *
+- *  Copyright (C) 2008-2018 Open Fodder
++ *  Copyright (C) 2008-2024 Open Fodder
+  *
+  *  This program is free software; you can redistribute it and/or modify
+  *  it under the terms of the GNU General Public License as published by
+diff --git a/Source/PC/Sound_PC.hpp b/Source/PC/Sound_PC.hpp
+index f3ef107..7c402c1 100644
+--- a/Source/PC/Sound_PC.hpp
++++ b/Source/PC/Sound_PC.hpp
+@@ -2,7 +2,7 @@
+  *  Open Fodder
+  *  ---------------
+  *
+- *  Copyright (C) 2008-2018 Open Fodder
++ *  Copyright (C) 2008-2024 Open Fodder
+  *
+  *  This program is free software; you can redistribute it and/or modify
+  *  it under the terms of the GNU General Public License as published by
+diff --git a/Source/PC/Sound_PC2.cpp b/Source/PC/Sound_PC2.cpp
+index c38e200..10d6a9f 100644
+--- a/Source/PC/Sound_PC2.cpp
++++ b/Source/PC/Sound_PC2.cpp
+@@ -2,7 +2,7 @@
+  *  Open Fodder
+  *  ---------------
+  *
+- *  Copyright (C) 2008-2018 Open Fodder
++ *  Copyright (C) 2008-2024 Open Fodder
+  *
+  *  This program is free software; you can redistribute it and/or modify
+  *  it under the terms of the GNU General Public License as published by
+diff --git a/Source/PC/Sound_PC2.hpp b/Source/PC/Sound_PC2.hpp
+index f1dce05..5cb8b91 100644
+--- a/Source/PC/Sound_PC2.hpp
++++ b/Source/PC/Sound_PC2.hpp
+@@ -2,7 +2,7 @@
+  *  Open Fodder
+  *  ---------------
+  *
+- *  Copyright (C) 2008-2018 Open Fodder
++ *  Copyright (C) 2008-2024 Open Fodder
+  *
+  *  This program is free software; you can redistribute it and/or modify
+  *  it under the terms of the GNU General Public License as published by
+diff --git a/Source/PC/SpriteData_PC.hpp b/Source/PC/SpriteData_PC.hpp
+index 56e05e1..e140db4 100644
+--- a/Source/PC/SpriteData_PC.hpp
++++ b/Source/PC/SpriteData_PC.hpp
+@@ -2,7 +2,7 @@
+  *  Open Fodder
+  *  ---------------
+  *
+- *  Copyright (C) 2008-2018 Open Fodder
++ *  Copyright (C) 2008-2024 Open Fodder
+  *
+  *  This program is free software; you can redistribute it and/or modify
+  *  it under the terms of the GNU General Public License as published by
+diff --git a/Source/Parameters.cpp b/Source/Parameters.cpp
+index 9e35a94..7404695 100644
+--- a/Source/Parameters.cpp
++++ b/Source/Parameters.cpp
+@@ -2,7 +2,7 @@
+  *  Open Fodder
+  *  ---------------
+  *
+- *  Copyright (C) 2008-2018 Open Fodder
++ *  Copyright (C) 2008-2024 Open Fodder
+  *
+  *  This program is free software; you can redistribute it and/or modify
+  *  it under the terms of the GNU General Public License as published by
+diff --git a/Source/Parameters.hpp b/Source/Parameters.hpp
+index 5992d02..19619d6 100644
+--- a/Source/Parameters.hpp
++++ b/Source/Parameters.hpp
+@@ -2,7 +2,7 @@
+  *  Open Fodder
+  *  ---------------
+  *
+- *  Copyright (C) 2008-2018 Open Fodder
++ *  Copyright (C) 2008-2024 Open Fodder
+  *
+  *  This program is free software; you can redistribute it and/or modify
+  *  it under the terms of the GNU General Public License as published by
+diff --git a/Source/Position.hpp b/Source/Position.hpp
+index 4b541af..479beb5 100644
+--- a/Source/Position.hpp
++++ b/Source/Position.hpp
+@@ -2,7 +2,7 @@
+  *  Open Fodder
+  *  ---------------
+  *
+- *  Copyright (C) 2008-2018 Open Fodder
++ *  Copyright (C) 2008-2024 Open Fodder
+  *
+  *  This program is free software; you can redistribute it and/or modify
+  *  it under the terms of the GNU General Public License as published by
+diff --git a/Source/Recruits.cpp b/Source/Recruits.cpp
+index 405c886..5d13738 100644
+--- a/Source/Recruits.cpp
++++ b/Source/Recruits.cpp
+@@ -2,7 +2,7 @@
+  *  Open Fodder
+  *  ---------------
+  *
+- *  Copyright (C) 2008-2018 Open Fodder
++ *  Copyright (C) 2008-2024 Open Fodder
+  *
+  *  This program is free software; you can redistribute it and/or modify
+  *  it under the terms of the GNU General Public License as published by
+diff --git a/Source/Recruits.hpp b/Source/Recruits.hpp
+index ccac424..07a0036 100644
+--- a/Source/Recruits.hpp
++++ b/Source/Recruits.hpp
+@@ -2,7 +2,7 @@
+  *  Open Fodder
+  *  ---------------
+  *
+- *  Copyright (C) 2008-2018 Open Fodder
++ *  Copyright (C) 2008-2024 Open Fodder
+  *
+  *  This program is free software; you can redistribute it and/or modify
+  *  it under the terms of the GNU General Public License as published by
+diff --git a/Source/ResourceMan.hpp b/Source/ResourceMan.hpp
+index fb53574..228fa9e 100644
+--- a/Source/ResourceMan.hpp
++++ b/Source/ResourceMan.hpp
+@@ -2,7 +2,7 @@
+ *  Open Fodder
+ *  ---------------
+ *
+-*  Copyright (C) 2008-2018 Open Fodder
++*  Copyright (C) 2008-2024 Open Fodder
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+diff --git a/Source/Resources.cpp b/Source/Resources.cpp
+index 86d2334..1d3a446 100644
+--- a/Source/Resources.cpp
++++ b/Source/Resources.cpp
+@@ -2,7 +2,7 @@
+  *  Open Fodder
+  *  ---------------
+  *
+- *  Copyright (C) 2008-2018 Open Fodder
++ *  Copyright (C) 2008-2024 Open Fodder
+  *
+  *  This program is free software; you can redistribute it and/or modify
+  *  it under the terms of the GNU General Public License as published by
+diff --git a/Source/Resources.hpp b/Source/Resources.hpp
+index 5668e82..22761bf 100644
+--- a/Source/Resources.hpp
++++ b/Source/Resources.hpp
+@@ -2,7 +2,7 @@
+  *  Open Fodder
+  *  ---------------
+  *
+- *  Copyright (C) 2008-2018 Open Fodder
++ *  Copyright (C) 2008-2024 Open Fodder
+  *
+  *  This program is free software; you can redistribute it and/or modify
+  *  it under the terms of the GNU General Public License as published by
+diff --git a/Source/ScriptingEngine.cpp b/Source/ScriptingEngine.cpp
+index 18142d1..bc7c08c 100644
+--- a/Source/ScriptingEngine.cpp
++++ b/Source/ScriptingEngine.cpp
+@@ -2,7 +2,7 @@
+  *  Open Fodder
+  *  ---------------
+  *
+- *  Copyright (C) 2008-2018 Open Fodder
++ *  Copyright (C) 2008-2024 Open Fodder
+  *
+  *  This program is free software; you can redistribute it and/or modify
+  *  it under the terms of the GNU General Public License as published by
+diff --git a/Source/ScriptingEngine.hpp b/Source/ScriptingEngine.hpp
+index f11b0cc..4119563 100644
+--- a/Source/ScriptingEngine.hpp
++++ b/Source/ScriptingEngine.hpp
+@@ -2,7 +2,7 @@
+  *  Open Fodder
+  *  ---------------
+  *
+- *  Copyright (C) 2008-2018 Open Fodder
++ *  Copyright (C) 2008-2024 Open Fodder
+  *
+  *  This program is free software; you can redistribute it and/or modify
+  *  it under the terms of the GNU General Public License as published by
+diff --git a/Source/Sound.cpp b/Source/Sound.cpp
+index b8a6a27..46243ca 100644
+--- a/Source/Sound.cpp
++++ b/Source/Sound.cpp
+@@ -2,7 +2,7 @@
+  *  Open Fodder
+  *  ---------------
+  *
+- *  Copyright (C) 2008-2018 Open Fodder
++ *  Copyright (C) 2008-2024 Open Fodder
+  *
+  *  This program is free software; you can redistribute it and/or modify
+  *  it under the terms of the GNU General Public License as published by
+diff --git a/Source/Sound.hpp b/Source/Sound.hpp
+index fa84bdb..0d886c3 100644
+--- a/Source/Sound.hpp
++++ b/Source/Sound.hpp
+@@ -2,7 +2,7 @@
+  *  Open Fodder
+  *  ---------------
+  *
+- *  Copyright (C) 2008-2018 Open Fodder
++ *  Copyright (C) 2008-2024 Open Fodder
+  *
+  *  This program is free software; you can redistribute it and/or modify
+  *  it under the terms of the GNU General Public License as published by
+diff --git a/Source/SpriteSheet.cpp b/Source/SpriteSheet.cpp
+index fcf1031..a552e41 100644
+--- a/Source/SpriteSheet.cpp
++++ b/Source/SpriteSheet.cpp
+@@ -2,7 +2,7 @@
+ *  Open Fodder
+ *  ---------------
+ *
+-*  Copyright (C) 2008-2018 Open Fodder
++*  Copyright (C) 2008-2024 Open Fodder
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+diff --git a/Source/SpriteSheet.hpp b/Source/SpriteSheet.hpp
+index b4bc7cf..1f598aa 100644
+--- a/Source/SpriteSheet.hpp
++++ b/Source/SpriteSheet.hpp
+@@ -2,7 +2,7 @@
+ *  Open Fodder
+ *  ---------------
+ *
+-*  Copyright (C) 2008-2018 Open Fodder
++*  Copyright (C) 2008-2024 Open Fodder
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+diff --git a/Source/Sprites.cpp b/Source/Sprites.cpp
+index 7546e67..33d51b3 100644
+--- a/Source/Sprites.cpp
++++ b/Source/Sprites.cpp
+@@ -2,7 +2,7 @@
+  *  Open Fodder
+  *  ---------------
+  *
+- *  Copyright (C) 2008-2018 Open Fodder
++ *  Copyright (C) 2008-2024 Open Fodder
+  *
+  *  This program is free software; you can redistribute it and/or modify
+  *  it under the terms of the GNU General Public License as published by
+diff --git a/Source/Sprites.hpp b/Source/Sprites.hpp
+index e8b2b4f..c5ea8fc 100644
+--- a/Source/Sprites.hpp
++++ b/Source/Sprites.hpp
+@@ -2,7 +2,7 @@
+  *  Open Fodder
+  *  ---------------
+  *
+- *  Copyright (C) 2008-2018 Open Fodder
++ *  Copyright (C) 2008-2024 Open Fodder
+  *
+  *  This program is free software; you can redistribute it and/or modify
+  *  it under the terms of the GNU General Public License as published by
+diff --git a/Source/Start.cpp b/Source/Start.cpp
+index 9f80d06..db5a821 100644
+--- a/Source/Start.cpp
++++ b/Source/Start.cpp
+@@ -2,7 +2,7 @@
+  *  Open Fodder
+  *  ---------------
+  *
+- *  Copyright (C) 2008-2018 Open Fodder
++ *  Copyright (C) 2008-2024 Open Fodder
+  *
+  *  This program is free software; you can redistribute it and/or modify
+  *  it under the terms of the GNU General Public License as published by
+diff --git a/Source/Start_Emscripten.cpp b/Source/Start_Emscripten.cpp
+index aa400d3..805c4bd 100644
+--- a/Source/Start_Emscripten.cpp
++++ b/Source/Start_Emscripten.cpp
+@@ -2,7 +2,7 @@
+  *  Open Fodder
+  *  ---------------
+  *
+- *  Copyright (C) 2008-2018 Open Fodder
++ *  Copyright (C) 2008-2024 Open Fodder
+  *
+  *  This program is free software; you can redistribute it and/or modify
+  *  it under the terms of the GNU General Public License as published by
+diff --git a/Source/Structures/Barracks.cpp b/Source/Structures/Barracks.cpp
+index d3f2f92..24984c9 100644
+--- a/Source/Structures/Barracks.cpp
++++ b/Source/Structures/Barracks.cpp
+@@ -2,7 +2,7 @@
+ *  Open Fodder
+ *  ---------------
+ *
+-*  Copyright (C) 2008-2018 Open Fodder
++*  Copyright (C) 2008-2024 Open Fodder
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+diff --git a/Source/Structures/Barracks.hpp b/Source/Structures/Barracks.hpp
+index 5a51f9f..2e58a1d 100644
+--- a/Source/Structures/Barracks.hpp
++++ b/Source/Structures/Barracks.hpp
+@@ -2,7 +2,7 @@
+ *  Open Fodder
+ *  ---------------
+ *
+-*  Copyright (C) 2008-2018 Open Fodder
++*  Copyright (C) 2008-2024 Open Fodder
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+diff --git a/Source/Tiles.cpp b/Source/Tiles.cpp
+index de04de7..6fdd6a2 100644
+--- a/Source/Tiles.cpp
++++ b/Source/Tiles.cpp
+@@ -2,7 +2,7 @@
+ *  Open Fodder
+ *  ---------------
+ *
+-*  Copyright (C) 2008-2018 Open Fodder
++*  Copyright (C) 2008-2024 Open Fodder
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+diff --git a/Source/Tiles.hpp b/Source/Tiles.hpp
+index 3cfe395..a42eb63 100644
+--- a/Source/Tiles.hpp
++++ b/Source/Tiles.hpp
+@@ -2,7 +2,7 @@
+ *  Open Fodder
+ *  ---------------
+ *
+-*  Copyright (C) 2008-2018 Open Fodder
++*  Copyright (C) 2008-2024 Open Fodder
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+diff --git a/Source/Types.hpp b/Source/Types.hpp
+index 7c352b7..6d513c7 100644
+--- a/Source/Types.hpp
++++ b/Source/Types.hpp
+@@ -2,7 +2,7 @@
+  *  Open Fodder
+  *  ---------------
+  *
+- *  Copyright (C) 2008-2018 Open Fodder
++ *  Copyright (C) 2008-2024 Open Fodder
+  *
+  *  This program is free software; you can redistribute it and/or modify
+  *  it under the terms of the GNU General Public License as published by
+diff --git a/Source/UnitTesting.cpp b/Source/UnitTesting.cpp
+index 213932a..c4896fa 100644
+--- a/Source/UnitTesting.cpp
++++ b/Source/UnitTesting.cpp
+@@ -2,7 +2,7 @@
+  *  Open Fodder
+  *  ---------------
+  *
+- *  Copyright (C) 2008-2018 Open Fodder
++ *  Copyright (C) 2008-2024 Open Fodder
+  *
+  *  This program is free software; you can redistribute it and/or modify
+  *  it under the terms of the GNU General Public License as published by
+diff --git a/Source/UnitTesting.hpp b/Source/UnitTesting.hpp
+index ff386c6..f94bfc1 100644
+--- a/Source/UnitTesting.hpp
++++ b/Source/UnitTesting.hpp
+@@ -2,7 +2,7 @@
+  *  Open Fodder
+  *  ---------------
+  *
+- *  Copyright (C) 2008-2018 Open Fodder
++ *  Copyright (C) 2008-2024 Open Fodder
+  *
+  *  This program is free software; you can redistribute it and/or modify
+  *  it under the terms of the GNU General Public License as published by
+diff --git a/Source/Utils/pseudorand.hpp b/Source/Utils/pseudorand.hpp
+index 0444c16..0991e9a 100644
+--- a/Source/Utils/pseudorand.hpp
++++ b/Source/Utils/pseudorand.hpp
+@@ -2,7 +2,7 @@
+  *  Open Fodder
+  *  ---------------
+  *
+- *  Copyright (C) 2008-2018 Open Fodder
++ *  Copyright (C) 2008-2024 Open Fodder
+  *
+  *  This program is free software; you can redistribute it and/or modify
+  *  it under the terms of the GNU General Public License as published by
+diff --git a/Source/Version.hpp b/Source/Version.hpp
+index f24cc91..a6740f5 100644
+--- a/Source/Version.hpp
++++ b/Source/Version.hpp
+@@ -2,7 +2,7 @@
+  *  Open Fodder
+  *  ---------------
+  *
+- *  Copyright (C) 2008-2018 Open Fodder
++ *  Copyright (C) 2008-2024 Open Fodder
+  *
+  *  This program is free software; you can redistribute it and/or modify
+  *  it under the terms of the GNU General Public License as published by
+diff --git a/Source/Versions.cpp b/Source/Versions.cpp
+index 510aef6..2fb6d33 100644
+--- a/Source/Versions.cpp
++++ b/Source/Versions.cpp
+@@ -2,7 +2,7 @@
+  *  Open Fodder
+  *  ---------------
+  *
+- *  Copyright (C) 2008-2018 Open Fodder
++ *  Copyright (C) 2008-2024 Open Fodder
+  *
+  *  This program is free software; you can redistribute it and/or modify
+  *  it under the terms of the GNU General Public License as published by
+diff --git a/Source/Versions.hpp b/Source/Versions.hpp
+index 8574eda..2a0aa65 100644
+--- a/Source/Versions.hpp
++++ b/Source/Versions.hpp
+@@ -2,7 +2,7 @@
+  *  Open Fodder
+  *  ---------------
+  *
+- *  Copyright (C) 2008-2018 Open Fodder
++ *  Copyright (C) 2008-2024 Open Fodder
+  *
+  *  This program is free software; you can redistribute it and/or modify
+  *  it under the terms of the GNU General Public License as published by
+diff --git a/Source/Versions_Files.hpp b/Source/Versions_Files.hpp
+index 97124cd..689baeb 100644
+--- a/Source/Versions_Files.hpp
++++ b/Source/Versions_Files.hpp
+@@ -2,7 +2,7 @@
+  *  Open Fodder
+  *  ---------------
+  *
+- *  Copyright (C) 2008-2018 Open Fodder
++ *  Copyright (C) 2008-2024 Open Fodder
+  *
+  *  This program is free software; you can redistribute it and/or modify
+  *  it under the terms of the GNU General Public License as published by
+diff --git a/Source/Window.cpp b/Source/Window.cpp
+index 2f15cd9..b153c3d 100644
+--- a/Source/Window.cpp
++++ b/Source/Window.cpp
+@@ -2,7 +2,7 @@
+  *  Open Fodder
+  *  ---------------
+  *
+- *  Copyright (C) 2008-2018 Open Fodder
++ *  Copyright (C) 2008-2024 Open Fodder
+  *
+  *  This program is free software; you can redistribute it and/or modify
+  *  it under the terms of the GNU General Public License as published by
+diff --git a/Source/Window.hpp b/Source/Window.hpp
+index 0160507..e089534 100644
+--- a/Source/Window.hpp
++++ b/Source/Window.hpp
+@@ -2,7 +2,7 @@
+  *  Open Fodder
+  *  ---------------
+  *
+- *  Copyright (C) 2008-2018 Open Fodder
++ *  Copyright (C) 2008-2024 Open Fodder
+  *
+  *  This program is free software; you can redistribute it and/or modify
+  *  it under the terms of the GNU General Public License as published by
+diff --git a/Source/stdafx.cpp b/Source/stdafx.cpp
+index 1906025..3943d5b 100644
+--- a/Source/stdafx.cpp
++++ b/Source/stdafx.cpp
+@@ -2,7 +2,7 @@
+  *  Open Fodder
+  *  ---------------
+  *
+- *  Copyright (C) 2008-2018 Open Fodder
++ *  Copyright (C) 2008-2024 Open Fodder
+  *
+  *  This program is free software; you can redistribute it and/or modify
+  *  it under the terms of the GNU General Public License as published by
+diff --git a/Source/stdafx.hpp b/Source/stdafx.hpp
+index 86a8632..913e829 100644
+--- a/Source/stdafx.hpp
++++ b/Source/stdafx.hpp
+@@ -2,7 +2,7 @@
+  *  Open Fodder
+  *  ---------------
+  *
+- *  Copyright (C) 2008-2018 Open Fodder
++ *  Copyright (C) 2008-2024 Open Fodder
+  *
+  *  This program is free software; you can redistribute it and/or modify
+  *  it under the terms of the GNU General Public License as published by
+-- 
+2.25.1
+
