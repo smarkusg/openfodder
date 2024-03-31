@@ -142,7 +142,9 @@ uint8* cGraphics_Amiga::GetSpriteData( uint16 pSegment ) {
 		return mImageMissionIntro.mData->data() + (252 * 40);
 
 	default:
+#ifndef __AMIGAOS4__
 		std::cout << "cGraphics_Amiga::GetSpriteData: Invalid ID " << pSegment << "\n";
+#endif
 		return 0;
 	}
 

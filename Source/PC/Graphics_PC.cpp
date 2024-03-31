@@ -101,7 +101,9 @@ uint8* cGraphics_PC::GetSpriteData( uint16 pSegment ) {
 			break;
 
 		default:
+#ifndef __AMIGAOS4__
 			std::cout << "cGraphics_PC::GetSpriteData: Invalid ID\n";
+#endif
 			break;
 	}
 	return 0;
