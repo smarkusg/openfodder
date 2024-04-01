@@ -2915,8 +2915,7 @@ void cFodder::eventProcess(const cEvent& pEvent) {
     case eEvent_Quit:
 #ifdef __AMIGAOS4__
 	//test AOS4 force exit
-	SDL_Quit();
-	exit(0);
+	mWindow->Window_fexit();
 #endif
         Exit(0);
         break;
@@ -18750,8 +18749,7 @@ void cFodder::Start() {
 			if (mGUI_SaveLoadAction == 1) {
 #ifdef __AMIGAOS4__
 				//test AOS4 force exit
-				SDL_Quit();
-    				exit(0);
+				mWindow->Window_fexit();
 #endif
 				return;
 }

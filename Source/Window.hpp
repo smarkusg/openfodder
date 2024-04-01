@@ -63,7 +63,9 @@ class cWindow {
 
 		virtual void		RenderAt( cSurface* pImage );
 		virtual void		RenderShrunk( cSurface* pImage );
-
+#ifdef __AMIGAOS4__
+		void 			Window_fexit(); 
+#endif
 		void				WindowIncrease();
 		void				WindowDecrease();
 
