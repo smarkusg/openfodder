@@ -2869,11 +2869,11 @@ void cFodder::eventProcess(const cEvent& pEvent) {
     switch (pEvent.mType) {
 
     case eEvent_KeyDown:
-        keyProcess(pEvent.mButton, false);
+        keyProcess(pEvent.mButton, true);
         break;
 
     case eEvent_KeyUp:
-        keyProcess(pEvent.mButton, true);
+        keyProcess(pEvent.mButton, false);
         break;
 
     case eEvent_MouseLeftDown:
@@ -2914,8 +2914,8 @@ void cFodder::eventProcess(const cEvent& pEvent) {
 
     case eEvent_Quit:
 #ifdef __AMIGAOS4__
-	//test AOS4 force exit
-	mWindow->Window_fexit();
+	//AOS4 force exit
+	mWindow->~cWindow(); 
 #endif
         Exit(0);
         break;
@@ -18748,8 +18748,9 @@ void cFodder::Start() {
 			// Exit pushed?
 			if (mGUI_SaveLoadAction == 1) {
 #ifdef __AMIGAOS4__
-				//test AOS4 force exit
-				mWindow->Window_fexit();
+				//AOS4 force exit
+				mWindow->~cWindow();
+
 #endif
 				return;
 }

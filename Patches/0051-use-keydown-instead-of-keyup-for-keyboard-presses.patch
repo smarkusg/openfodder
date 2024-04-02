@@ -1,0 +1,30 @@
+From 3fbe5bfb4a0a2303088b7a6bdf346300b0de027e Mon Sep 17 00:00:00 2001
+From: Robert Crossfield <robcrossfield@gmail.com>
+Date: Mon, 1 Apr 2024 19:30:17 +1100
+Subject: [PATCH 51/51] use keydown instead of keyup for keyboard presses
+
+---
+ Source/Fodder.cpp | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/Source/Fodder.cpp b/Source/Fodder.cpp
+index 63d4888..2bc6d4d 100644
+--- a/Source/Fodder.cpp
++++ b/Source/Fodder.cpp
+@@ -3019,11 +3019,11 @@ void cFodder::eventProcess(const cEvent& pEvent) {
+         break;
+ 
+     case eEvent_KeyDown:
+-        keyProcess(pEvent.mButton, false);
++        keyProcess(pEvent.mButton, true);
+         break;
+ 
+     case eEvent_KeyUp:
+-        keyProcess(pEvent.mButton, true);
++        keyProcess(pEvent.mButton, false);
+         break;
+ 
+     case eEvent_MouseLeftDown:
+-- 
+2.25.1
+

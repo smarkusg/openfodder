@@ -42,15 +42,6 @@ cWindow::cWindow() {
 	mResized = false;
 }
 
-#ifdef __AMIGAOS4__
-void cWindow::Window_fexit() {
-
-	SDL_DestroyRenderer( mRenderer );
-	SDL_DestroyWindow( mWindow );
-	SDL_Quit();
-}
-#endif
-
 cWindow::~cWindow() {
 
 	SDL_DestroyRenderer( mRenderer );
