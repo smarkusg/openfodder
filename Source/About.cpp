@@ -35,7 +35,9 @@ cAbout::cAbout() {
     std::transform(compiled.begin(), compiled.end(), compiled.begin(), ::toupper);
     std::transform(version.begin(), version.end(), version.begin(), ::toupper);
     std::replace(compiled.begin(), compiled.end(), ':', ' ');
-
+#ifdef __AMIGAOS4__
+    std::replace(version.begin(), version.end(), '.', ' ');
+#endif
     std::vector<sIntroString> AboutText = {
         { TEXTPOS_BUILD + 0 , "OPEN FODDER"},
         //{ TEXTPOS_BUILD + 10 , "BUILD VERSION "},
@@ -70,6 +72,14 @@ cAbout::cAbout() {
 		{ TEXTPOS_POWERED + 40, "DUKGLUE"},
         { TEXTPOS_POWERED + 50, "IDA"},
 
+#ifdef __AMIGAOS4__
+        { 800, "AMIGAOS4 PORT BY"},
+        { 800+10, "SMARKUSG"},
+        { 800+20, "SALASS00"},
+        { 800+40, "AND THE HELP OF"},
+        { 800+50, "SAMIR HAWAMDEH"},
+        { 800+60, "JAVIER RIVAS"},
+#endif
         // Just for fun: loc_2B48E
         { 1100, "PUSH CX"},
         { 1110, "PUSH SI"},
