@@ -60,7 +60,11 @@ bool cWindow::InitWindow( const std::string& pWindowTitle ) {
 	
     ToggleFullscreen();
 
+#ifdef __AMIGAOS4__
+	mWindow = SDL_CreateWindow(pWindowTitle.c_str(), SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, GetWindowSize().mWidth, GetWindowSize().mHeight, SDL_WINDOW_HIDDEN );
+#else
 	mWindow = SDL_CreateWindow(pWindowTitle.c_str(), SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, GetWindowSize().mWidth, GetWindowSize().mHeight, SDL_WINDOW_SHOWN );
+#endif
 	if (!mWindow) {
         g_Debugger->Error("Failed to create window");
 		exit( 1 );
@@ -94,6 +98,9 @@ bool cWindow::InitWindow( const std::string& pWindowTitle ) {
         ToggleFullscreen();
     }
 
+#ifdef __AMIGAOS4__
+	SDL_ShowWindow(mWindow); 
+#endif
 	SDL_SetRelativeMouseMode(SDL_TRUE);
 
 	return true;
