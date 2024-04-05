@@ -44,6 +44,10 @@ public:
 	size_t mWindowRows;
 	size_t mWindowColumns;
 
+#ifdef __AMIGAOS4__
+	bool mRandomMapDisable;     //Disable random map 
+#endif
+
 	bool mRandom;               // Start a random map
 	bool mRandomSave;			// Create a random map
 	std::string mRandomFilename;// Name to save random map as
@@ -117,6 +121,9 @@ public:
 		mWindowRows = 0;
 		mWindowColumns = 0;
 
+#ifdef __AMIGAOS4__
+		mRandomMapDisable = true;
+#endif
 		mRandom = false;
 		mRandomSave = false;
 

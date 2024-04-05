@@ -112,3 +112,6 @@ public:
 };
 
 extern const sGameVersion KnownGameVersions[20];
+#ifdef __AMIGAOS4__
+extern const sGameVersion KnownGameVersions_DisableRandom[20];
+#endif

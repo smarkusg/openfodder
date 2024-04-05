@@ -22,6 +22,9 @@ scale=auto
 ; to avoid ugly irregular pixels and shimmering artifacts. 
 integer=true
 
+; Turning off the Random Map generator. The option for AOS4 helps the mouse perform better
+disable-random=true
+
 ; Number of map tiles to draw horizontally (0 for platform default)
 columns=0
 

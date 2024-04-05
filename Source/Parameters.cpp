@@ -42,6 +42,9 @@ std::string sFodderParameters::ToJson() {
 	Save["mSkipService"] = mSkipService;
 
 	Save["mWindowMode"] = mWindowMode;
+#ifdef __AMIGAOS4__
+	Save["mRandomMapDisable"] = mRandomMapDisable;
+#endif
 	Save["mRandom"] = mRandom;
 	Save["mDefaultPlatform"] = mDefaultPlatform;
 	Save["mCampaignName"] = mCampaignName;
@@ -76,6 +79,9 @@ bool sFodderParameters::FromJson(const std::string& pJson) {
 	mPhaseNumber = LoadedData["mPhaseNumber"];
 	mWindowMode = LoadedData["mWindowMode"];
 	mIntegerScaling = LoadedData["mIntegerScaling"];
+#ifdef __AMIGAOS4__
+	mRandomMapDisable = LoadedData["mRandomMapDisable"];
+#endif
 	mRandom = LoadedData["mRandom"];
 	mDefaultPlatform = LoadedData["mDefaultPlatform"];
 	mCampaignName = LoadedData["mCampaignName"];
@@ -381,7 +387,13 @@ bool sFodderParameters::ProcessINI() {
 			else {
 				mIntegerScaling = false;
 			}
-
+#ifdef __AMIGAOS4__
+			if (ini.get("disable-random", "true") == "true")
+				mRandomMapDisable = true;
+			else {
+				mRandomMapDisable = false;
+			}
+#endif
 			if (ini.get("columns", "0") == "0")
 				mWindowColumns = 0;
 			else {

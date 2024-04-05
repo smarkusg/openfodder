@@ -37,7 +37,12 @@ enum eRelease {
 	AmigaAlienLevels,
 
 	Custom,
+#ifdef __AMIGAOS4__
+	eRandom,
+	DisableRandom
+#else
 	eRandom
+#endif
 };
 
 enum eGame {

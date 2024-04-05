@@ -119,6 +119,44 @@ const sGameVersion KnownGameVersions[] = {
 
 };
 
+#ifdef __AMIGAOS4__
+/**
+ * Known versions of Cannon Fodder withoud Random Map
+ */
+const sGameVersion KnownGameVersions_DisableRandom[] = {
+
+	/* Retail */
+	{ "Cannon Fodder",					eGame::CF1, ePlatform::Amiga,	eRelease::Retail,	"Amiga",	mAmigaFiles },
+	{ "Cannon Fodder",					eGame::CF1, ePlatform::Amiga,	eRelease::Retail,	"Amiga_CD",	mAmigaCD32Files },
+	{ "Cannon Fodder",					eGame::CF1, ePlatform::PC,		eRelease::Retail,	"Dos_CD",	mPCFiles },
+	{ "Cannon Fodder 2",				eGame::CF2, ePlatform::Amiga,	eRelease::Retail,	"Amiga2",	mAmiga2Files },
+	{ "Cannon Fodder 2",				eGame::CF2, ePlatform::PC,		eRelease::Retail,	"Dos2_CD",	mPC2Files },
+
+	/* Amiga Magazine Demos */
+	{ "Cannon Fodder Plus",				eGame::CF1, ePlatform::Amiga,	eRelease::AmigaPower,		    "Plus",				mPlusFiles },
+	{ "Amiga The One",                  eGame::CF1, ePlatform::Amiga,   eRelease::AmigaTheOne,          "AmigaTheOne",      mAmigaTheOneFiles },
+	{ "Amiga Action",                   eGame::CF1, ePlatform::Amiga,   eRelease::AmigaAction,          "AmigaAction",      mAmigaActionFiles },
+	{ "Amiga Power Alien Levels",		eGame::CF2, ePlatform::Amiga,	eRelease::AmigaAlienLevels,		"AmigaAlienLevels", mAmigaAlienLevels },
+	{ "Amiga Format Christmas Special", eGame::CF1, ePlatform::Amiga,	eRelease::AmigaXMAS,		    "AmigaFormat_XMAS", mAmigaFormatFiles },
+	{ "Amiga Format Not Very Festive",  eGame::CF2, ePlatform::Amiga,   eRelease::AmigaNotVeryFestive,  "AmigaFormat_NVF",  mAmigaFormat_NotVeryFestiveFiles },
+
+	/* PC Demos */
+	{ "PC Format",                      eGame::CF1, ePlatform::PC,      eRelease::PCFormat, "PCFormat", mPCFormatFiles },
+
+	/* Custom & Random must be last, as they depend on a previous retail version being detected first */
+	{ "Single Map", eGame::CF1, ePlatform::Amiga,   eRelease::Custom,	"Custom", { } },
+	{ "Single Map", eGame::CF1, ePlatform::PC,      eRelease::Custom,	"Custom", { } },
+	{ "Single Map", eGame::CF2, ePlatform::Amiga,   eRelease::Custom,	"Custom", { } },
+	{ "Single Map", eGame::CF2, ePlatform::PC,      eRelease::Custom,	"Custom", { } },
+
+	{ "Random Map", eGame::CF1, ePlatform::Amiga,   eRelease::DisableRandom,"Custom", { } },
+	{ "Random Map", eGame::CF1, ePlatform::PC,      eRelease::DisableRandom,"Custom", { } },
+	{ "Random Map", eGame::CF2, ePlatform::Amiga,   eRelease::DisableRandom,"Custom", { } },
+	{ "Random Map", eGame::CF2, ePlatform::PC,      eRelease::DisableRandom,"Custom", { } },
+
+};
+#endif
+
 const sGameVersion* cVersions::GetRetail(const ePlatform pPlatform, const eGame pGame) const {
 
 	auto Available = g_ResourceMan->GetAvailable();

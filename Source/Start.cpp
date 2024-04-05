@@ -39,9 +39,11 @@ int start(int argc, char *argv[]) {
 
 	g_Fodder->Prepare(Params);
 
+	int result = 0;
+
 	if (g_Fodder->mStartParams->mUnitTesting) {
 		cUnitTesting Testing;
-		return Testing.Start() ? 0 : -1;
+		result = Testing.Start() ? 0 : -1;
 	}
 	else if (g_Fodder->mStartParams->mRandomSave) {
 		sMapParams Params(g_Fodder->mRandom.get());
@@ -52,7 +54,7 @@ int start(int argc, char *argv[]) {
 		g_Fodder->mGame_Data.mDemoRecorded.save();
 	}
 
-	return 0;
+	return result;
 }
 
 // Debug stuff

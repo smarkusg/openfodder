@@ -132,6 +132,62 @@ void cResourceMan::findVersions() {
 	// Loop each path
 	for (auto& ValidPath : mValidPaths) {
 		// Loop all known versions
+#ifdef __AMIGAOS4__
+           if (g_Fodder->mParams->mRandomMapDisable) {
+		for(auto& KnownVersion : KnownGameVersions_DisableRandom) {
+			// If this release has files, continue on
+			if (mReleaseFiles.find(&KnownVersion) != mReleaseFiles.end())
+				continue;
+
+			std::string base = ValidPath + PathGenerate(KnownVersion.mDataPath, eData) + "/";
+			tStringMap ReleaseFiles;
+
+			// Loop all files in the data directory
+			auto baseFiles = DirectoryList(base, "");
+			for (auto& baseFile : baseFiles) {
+				std::string baseFileLower = baseFile;
+				transform(baseFileLower.begin(), baseFileLower.end(), baseFileLower.begin(), ::tolower);
+
+				// Loop each file of known version
+				for (auto& File : KnownVersion.mFiles) {
+					std::string FileLower = File.mName;
+					transform(FileLower.begin(), FileLower.end(), FileLower.begin(), ::tolower);
+
+					// See if we match
+					if (baseFileLower == FileLower) {
+						std::string MD5 = FileMD5(base + baseFile);
+
+						ReleaseFiles.insert(std::make_pair(FileLower, base + baseFile));
+						break;
+					}
+				}
+			}
+
+			// A very hacky method for ensuring a retail version is available, before allowing Customs
+			if (KnownVersion.isCustom()) {
+				if (g_Fodder->mParams->mDefaultGame == KnownVersion.mGame) {
+					if (haveRetail)
+						mReleasePath.insert(std::make_pair(&KnownVersion, base));
+				}
+			} else {
+
+				// Ensure we atleast have found 1 file, and we have atleast the reuqired number of files, or every file with an MD5 match
+				if (KnownVersion.mFiles.size() > 0 && KnownVersion.mFiles.size() == ReleaseFiles.size()) {
+					if (!haveRetail)
+						haveRetail = KnownVersion.isRetail();
+
+					// if we found files, add them to our tracker
+					mReleaseFiles.insert(std::make_pair(&KnownVersion, ReleaseFiles));
+					mReleasePath.insert(mReleasePath.end(), std::make_pair(&KnownVersion, base));
+				}
+				else {
+					// 
+				}
+			}
+		}
+             }
+            else {
+#endif //AMIGAOS4
 		for (auto& KnownVersion : KnownGameVersions) {
 			// If this release has files, continue on
 			if (mReleaseFiles.find(&KnownVersion) != mReleaseFiles.end())
@@ -156,7 +212,6 @@ void cResourceMan::findVersions() {
 						std::string MD5 = FileMD5(base + baseFile);
 
 						ReleaseFiles.insert(std::make_pair(FileLower, base + baseFile));
-
 #ifndef __AMIGAOS4__
 						if (MD5 != File.mChecksum) {
 							if (MD5.length() == 0) {
@@ -196,6 +251,9 @@ void cResourceMan::findVersions() {
 				}
 			}
 		}
+#ifdef __AMIGAOS4__
+           }
+#endif
 	}
 }
 

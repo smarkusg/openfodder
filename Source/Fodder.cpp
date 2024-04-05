@@ -3521,7 +3521,9 @@ void cFodder::Prepare(std::shared_ptr<sFodderParameters> pParams) {
     mSurface2 = new cSurface(getSurfaceSize() );
 
 	Sprite_Clear_All();
-
+#ifdef __AMIGAOS4__
+    if (!g_Fodder->mParams->mRandomMapDisable)
+#endif
 	g_ScriptingEngine = std::make_shared<cScriptingEngine>();
 }
 
