@@ -104,7 +104,7 @@ bool cWindow::InitWindow( const std::string& pWindowTitle ) {
     }
 
 #ifdef __AMIGAOS4__
-	SDL_ShowWindow(mWindow);
+	SDL_RaiseWindow(mWindow);
 #endif
 	SDL_SetRelativeMouseMode(SDL_TRUE);
 
