@@ -95,8 +95,9 @@ bool cWindow::InitWindow( const std::string& pWindowTitle ) {
      if (g_Fodder->mParams->mMouseSpeed){
        std::string strData = std::to_string(g_Fodder->mParams->mMouseSpeed);
        char* mspeed = new char[strData.length() + 1];
- 	strcpy(mspeed, strData.c_str());
-	SDL_SetHint(SDL_HINT_MOUSE_RELATIVE_SPEED_SCALE, mspeed);
+       strcpy(mspeed, strData.c_str());
+
+     SDL_SetHint(SDL_HINT_MOUSE_RELATIVE_SPEED_SCALE, mspeed);
 }
 #endif
 	SetCursor();
