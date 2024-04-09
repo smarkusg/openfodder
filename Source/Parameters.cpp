@@ -393,6 +393,12 @@ bool sFodderParameters::ProcessINI() {
 			else {
 				mRandomMapDisable = false;
 			}
+
+			if (ini.get("mouse-speed", "0") == "0")
+				mMouseSpeed = 0;
+			else {
+				mMouseSpeed = ini.get("mouse-speed", 0);
+			}
 #endif
 			if (ini.get("columns", "0") == "0")
 				mWindowColumns = 0;

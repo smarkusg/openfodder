@@ -91,7 +91,14 @@ bool cWindow::InitWindow( const std::string& pWindowTitle ) {
     }
 
 	SDL_SetHintWithPriority(SDL_HINT_MOUSE_RELATIVE_MODE_WARP, "1", SDL_HINT_OVERRIDE);
-
+#ifdef __AMIGAOS4__ //test AOS4 mouse speed improvement
+     if (g_Fodder->mParams->mMouseSpeed){
+       std::string strData = std::to_string(g_Fodder->mParams->mMouseSpeed);
+       char* mspeed = new char[strData.length() + 1];
+ 	strcpy(mspeed, strData.c_str());
+	SDL_SetHint(SDL_HINT_MOUSE_RELATIVE_SPEED_SCALE, mspeed);
+}
+#endif
 	SetCursor();
 
     if (g_Fodder->mParams->mWindowMode) {
@@ -104,7 +111,7 @@ bool cWindow::InitWindow( const std::string& pWindowTitle ) {
     }
 
 #ifdef __AMIGAOS4__
-	SDL_RaiseWindow(mWindow);
+	SDL_ShowWindow(mWindow);
 #endif
 	SDL_SetRelativeMouseMode(SDL_TRUE);
 
@@ -458,15 +465,15 @@ void cWindow::ToggleFullscreen() {
 		mScalerPrevious = mScaler;
 		SetWindowSize( CalculateFullscreenSize() );
 #ifdef __AMIGAOS4__ //AOS4 cannot roll quickly
-SDL_Delay(150); 
-#endif 
+SDL_Delay(150);
+#endif
 		SDL_SetWindowFullscreen( mWindow, SDL_WINDOW_FULLSCREEN_DESKTOP );
 		mWindowMode = false;
 	} else {
 		mWindowMode = true;
 #ifdef __AMIGAOS4__ //AOS4 cannot roll quickly
 SDL_Delay(50);
-#endif 
+#endif
 		SetWindowSize( mScalerPrevious );
 	}
 }

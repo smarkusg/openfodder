@@ -37,9 +37,11 @@ alternate-mouse=yes
 ; The mouse is locked to the window
 mouse-locked=yes
 
+; Mouse speed for AOS4
+mouse-speed=2
+
 ; Enable copy protection screen on Dos CD release
 copyprotection=false
-
 
 [paths]
 ; Paths to data base folder

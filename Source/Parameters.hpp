@@ -46,6 +46,7 @@ public:
 
 #ifdef __AMIGAOS4__
 	bool mRandomMapDisable;     //Disable random map 
+	size_t mMouseSpeed;
 #endif
 
 	bool mRandom;               // Start a random map
@@ -123,6 +124,7 @@ public:
 
 #ifdef __AMIGAOS4__
 		mRandomMapDisable = true;
+		mMouseSpeed = 0;
 #endif
 		mRandom = false;
 		mRandomSave = false;

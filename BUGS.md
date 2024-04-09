@@ -9,3 +9,5 @@ Issues in the original engine which have been fixed  (unfortunately this list is
 * Out of bounds memory accesses. Numerous code accessed past either the beginning or end of a few arrays. This was not really a noticable problem on the Amiga or in Dos but is on a modern OS with virtual memory (especially on dynamically allocated memory)
 
 * Having a grenade explode at the bottom right corner of a map would cause memory corruption after the map array
+
+* Some maps from the demos version may cause problems (AOS4)
